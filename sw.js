@@ -1,11 +1,11 @@
 // sw.js - Service Worker for 회원 관리 앱
 
-const CACHE_NAME = 'mmcsw-v1.0.0';
+const CACHE_NAME = 'cmlogin-v1.0.0';
 const urlsToCache = [
   './',
   './index.html',
   './css/base.css',
-  './css/lock.css',
+  './css/login.css',
   './css/camera.css',
   './css/member.css',
   './css/calendar.css',
@@ -13,7 +13,7 @@ const urlsToCache = [
   './css/responsive.css',
   './css/schedule.css',
   './js/base.js',
-  './js/lock.js',
+  './js/login.js',
   './js/modal.js',
   './js/camera.js',
   './js/member.js',
