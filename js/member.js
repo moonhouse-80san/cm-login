@@ -528,13 +528,15 @@ function renderSchedule() {
         });
 
         scheduleHTML += `
-            <div class="day-schedule">
-                <div class="day-header">
-                    <div class="day-name">
-                        ${dayNames[day]}
+            <div class="day-section collapsed" data-day-section="${day}">
+                <div class="day-section-header" onclick="toggleDaySection('${day}')">
+                    <div class="day-title">
+                        <span class="toggle-icon">▶</span>
+                        <span class="day-name">${dayNames[day]}</span>
                         <span class="day-count">${dayMembers.length}명</span>
                     </div>
                 </div>
+                <div class="day-schedule-content">
         `;
 
         if (sortedTimeSlots.length === 0) {
@@ -559,10 +561,27 @@ function renderSchedule() {
             });
         }
 
-        scheduleHTML += `</div>`;
+        scheduleHTML += `
+                </div>
+            </div>
+        `;
     });
     
     scheduleEl.innerHTML = scheduleHTML;
+}
+
+// 요일 섹션 토글
+function toggleDaySection(day) {
+    const section = document.querySelector(`[data-day-section="${day}"]`);
+    if (section) {
+        const isCollapsed = section.classList.contains('collapsed');
+        section.classList.toggle('collapsed');
+        
+        const toggleIcon = section.querySelector('.toggle-icon');
+        if (toggleIcon) {
+            toggleIcon.textContent = isCollapsed ? '▼' : '▶';
+        }
+    }
 }
 
 // 탭 전환

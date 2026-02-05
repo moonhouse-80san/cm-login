@@ -71,6 +71,20 @@ function countMembersByCoach() {
     return { coachCounts, noCoachCount };
 }
 
+// 코치 섹션 토글
+function toggleCoachSection(coachName) {
+    const section = document.querySelector(`[data-coach-section="${coachName}"]`);
+    if (section) {
+        const isCollapsed = section.classList.contains('collapsed');
+        section.classList.toggle('collapsed');
+        
+        const toggleIcon = section.querySelector('.toggle-icon');
+        if (toggleIcon) {
+            toggleIcon.textContent = isCollapsed ? '▼' : '▶';
+        }
+    }
+}
+
 // 코치별 회원 목록 렌더링
 function renderMembersByCoach() {
     const listEl = document.getElementById('listSection');
@@ -151,9 +165,10 @@ function renderMembersByCoach() {
         const coachMemberCount = coachMembers.length;
         
         html += `
-            <div class="coach-section">
-                <div class="coach-section-header">
+            <div class="coach-section collapsed" data-coach-section="${coach}">
+                <div class="coach-section-header" onclick="toggleCoachSection('${coach}')">
                     <div class="coach-title">
+                        <span class="toggle-icon">▶</span>
                         <span class="coach-badge">🏋️ ${coach}</span>
                         <span class="coach-count">${coachMemberCount}명</span>
                     </div>
@@ -168,9 +183,10 @@ function renderMembersByCoach() {
     // 미선택 회원 섹션
     if (noCoachMembers.length > 0) {
         html += `
-            <div class="coach-section">
-                <div class="coach-section-header">
+            <div class="coach-section collapsed" data-coach-section="none">
+                <div class="coach-section-header" onclick="toggleCoachSection('none')">
                     <div class="coach-title">
+                        <span class="toggle-icon">▶</span>
                         <span class="coach-badge">👤 미선택</span>
                         <span class="coach-count">${noCoachMembers.length}명</span>
                     </div>
