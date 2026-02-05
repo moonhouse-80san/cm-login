@@ -7,6 +7,34 @@
     border-radius: 10px;
 }
 
+/* 로그아웃 아이콘 */
+.logout-icon {
+    position: absolute;
+    top: 20px;
+    left: 70px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    background: rgba(244, 67, 54, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 10;
+}
+
+.logout-icon:hover {
+    background: rgba(244, 67, 54, 1);
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.5);
+}
+
+.logout-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
 .login-info-group {
     display: flex;
     justify-content: space-between;

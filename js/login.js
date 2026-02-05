@@ -113,6 +113,12 @@ function updateUIByRole() {
     const updateBtn = document.getElementById('updateBtn');
     const settingsUserStatus = document.getElementById('settingsUserStatus');
     const settingsLogoutBtn = document.getElementById('settingsLogoutBtn');
+    const logoutIcon = document.getElementById('logoutIcon');
+    
+    // 헤더의 로그아웃 아이콘 표시/숨김
+    if (logoutIcon) {
+        logoutIcon.style.display = role === USER_ROLES.GUEST ? 'none' : 'flex';
+    }
     
     // 설정 모달의 로그인 상태 표시
     if (settingsUserStatus) {
