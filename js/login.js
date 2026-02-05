@@ -114,6 +114,12 @@ function updateUIByRole() {
     const settingsUserStatus = document.getElementById('settingsUserStatus');
     const settingsLogoutBtn = document.getElementById('settingsLogoutBtn');
     const logoutIcon = document.getElementById('logoutIcon');
+    const syncStatus = document.getElementById('syncStatus');
+    
+    // 동기화 버튼 표시/숨김 (로그인 시에만 표시)
+    if (syncStatus) {
+        syncStatus.style.display = role === USER_ROLES.GUEST ? 'none' : 'block';
+    }
     
     // 헤더의 로그아웃 아이콘 표시/숨김
     if (logoutIcon) {

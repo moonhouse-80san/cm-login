@@ -11,7 +11,7 @@
 .logout-icon {
     position: absolute;
     top: 20px;
-    left: 70px;
+    right: 60px;
     width: 30px;
     height: 30px;
     cursor: pointer;
