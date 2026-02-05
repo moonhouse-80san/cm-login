@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#2196F3">
-    <title>로그인 탁구클럽 회원 관리 앱</title>
+    <title>부기 탁구클럽 회원 관리 앱</title>
     <link rel="manifest" href="./etc/manifest.json">
     <link rel="apple-touch-icon" href="icon-192x192.png">
     <link rel="stylesheet" href="css/base.css">
@@ -24,30 +24,13 @@
         <!-- 헤더 -->
         <div class="header">
             <div class="sync-status" id="syncStatus">☁️ 동기화</div>
-            <div class="settings-icon" onclick="openSettings()">
+            <div class="settings-icon" onclick="handleSettingsClick()">
                 <svg viewBox="0 0 24 24">
                     <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c.04-0.24.24-0.41.48-0.41 h3.84c0.24,0,0.43,0.17,0.47,0.41L19.25,5.35c0.59,0.24,1.13,0.56,1.62,0.94l2.39-0.96c0.22-0.08,0.47,0,0.59,0.22l1.92,3.32 c0.12,0.22,0.07,0.47-0.12,0.61l-2.03,1.58c0.05,0.3,0.07,0.63,0.07,0.94s-0.02,0.64-0.07,0.94l2.03,1.58 c0.18,0.14,0.23,0.41,0.12,0.61l-1.92,3.32c-0.12,0.22-0.37,0.29-0.59,0.22l-2.39-0.96c-0.5,0.38-1.03,0.7-1.62,0.94l-0.36,2.54 c-0.05,0.24-0.24,0.41-0.47,0.41h-3.84c-0.24,0-0.44-0.17-0.48-0.41l-0.36-2.54c-0.59-0.24-1.13-0.56-1.62-0.94l-2.39,0.96 c-0.22,0.08-0.47,0-0.59-0.22l-1.92,3.32c-0.12-0.22-0.07-0.47,0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
                 </svg>
             </div>
             <div class="club-name" id="clubNameDisplay">구장명을 설정하세요</div>
             <div class="member-count">총<span id="memberCount">0</span></div>
-        </div>
-
-        <!-- 로그인 섹션 -->
-        <div class="login-section" id="loginSection">
-            <div class="login-info-group">
-                <div class="login-info" id="loginInfo">
-                    <span style="color: white;">👤 손님</span>
-                </div>
-                <div class="login-buttons">
-                    <button class="login-btn" onclick="openLoginModal()">
-                        🔑 로그인
-                    </button>
-                    <button class="logout-btn" onclick="logout()" id="logoutBtn" style="display: none;">
-                        🚪 로그아웃
-                    </button>
-                </div>
-            </div>
         </div>
 
         <!-- 검색 및 목록 섹션 -->
@@ -311,6 +294,10 @@
                 <label for="loginPassword">비밀번호</label>
                 <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" onkeyup="if(event.key === 'Enter') login()">
             </div>
+            <div class="login-form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <input type="checkbox" id="rememberLogin" style="width: auto; margin: 0;">
+                <label for="rememberLogin" style="margin: 0; cursor: pointer; font-size: 14px;">로그인 상태 유지</label>
+            </div>
             <div class="modal-buttons">
                 <button style="background: #2196F3;" onclick="login()">로그인</button>
                 <button style="background: #9E9E9E;" onclick="closeLoginModal()">취소</button>
@@ -423,8 +410,19 @@
                 <button style="background: #9E9E9E;" onclick="closeSettings()">취소</button>
             </div>
 
-			<!-- settingsModal 내부의 버튼 부분 수정 -->
+			<!-- 로그인 정보 및 로그아웃 -->
 			<div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
+				<div id="settingsLoginInfo" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: center;">
+					<div style="font-size: 14px; color: #666; margin-bottom: 8px;">현재 로그인 상태</div>
+					<div style="font-size: 16px; font-weight: 600; color: #333;" id="settingsUserStatus">👤 손님</div>
+				</div>
+				<button id="settingsLogoutBtn" style="width: 100%; padding: 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: none;" onclick="logout(); closeSettings();">
+					🚪 로그아웃
+				</button>
+			</div>
+
+			<!-- settingsModal 내부의 버튼 부분 수정 -->
+			<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
 				<button style="width: 100%; padding: 12px; background: #2196F3; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;" onclick="exportData()">
 					📤 엑셀 내보내기
 				</button>

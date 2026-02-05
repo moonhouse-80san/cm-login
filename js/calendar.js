@@ -4,7 +4,7 @@ let selectedDate = null;
 
 // 출석 알림 모달 표시
 function showAttendanceAlert(memberName, currentCount, targetCount) {
-    const message = `<strong>${memberName}</strong> 회원님<br>현재 출석: <strong>${currentCount}회</strong> / 출석: <strong>${targetCount}회</strong><br><br>회비입금이 임박했습니다!`;
+    const message = `<strong>${memberName}</strong> 회원님<br>현재 출석: <strong>${currentCount}회</strong> / 목표: <strong>${targetCount}회</strong><br><br>회비입금이 임박했습니다!`;
     document.getElementById('attendanceAlertMessage').innerHTML = message;
     document.getElementById('attendanceAlertModal').classList.add('active');
     playNotificationSound();
@@ -14,47 +14,38 @@ function closeAttendanceAlert() {
     document.getElementById('attendanceAlertModal').classList.remove('active');
 }
 
-// 출석 완료 SMS 발송 (네이티브 SMS 앱 실행)
+// 출석 완료 SMS 발송
 function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     if (!memberPhone) {
         showAlert('회원의 전화번호가 등록되어 있지 않습니다.');
         return;
     }
     
-    // 전화번호에서 하이픈 제거
     const phoneNumber = String(memberPhone).replace(/-/g, '');
-    
-    // SMS 메시지 내용
     const clubName = settings.clubName || '탁구클럽';
     const message = `${memberName}회원님 출석 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다.\n감사합니다.\n\n- ${clubName}`;
     
-    // 모바일 환경 체크
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-        // 모바일: SMS 앱 열기
         const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
         window.location.href = smsUrl;
     } else {
-        // PC: 전화번호와 메시지를 클립보드에 복사
         const textToCopy = `전화번호: ${phoneNumber}\n\n메시지:\n${message}`;
         
-        // 클립보드 복사 시도
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showAlert('전화번호와 메시지가 클립보드에 복사되었습니다!\n\n핸드폰으로 문자를 보내주세요.');
             }).catch(() => {
-                // 클립보드 복사 실패 시 텍스트 표시
                 showSMSTextModal(phoneNumber, message);
             });
         } else {
-            // 구형 브라우저: 텍스트 표시
             showSMSTextModal(phoneNumber, message);
         }
     }
 }
 
-// SMS 메시지를 모달로 표시 (PC 환경용)
+// SMS 메시지를 모달로 표시
 function showSMSTextModal(phoneNumber, message) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
@@ -84,7 +75,6 @@ function showSMSTextModal(phoneNumber, message) {
     document.body.appendChild(modal);
 }
 
-// 클립보드 복사 헬퍼 함수
 function copyToClipboard(phoneNumber, message) {
     const textToCopy = `전화번호: ${phoneNumber}\n\n메시지:\n${message}`;
     
@@ -108,7 +98,9 @@ function copyToClipboard(phoneNumber, message) {
 // 알림음 재생
 function playNotificationSound() {
     const audio = document.getElementById('notificationSound');
-    audio.play().catch(e => console.log('알림음 재생 실패:', e));
+    if (audio) {
+        audio.play().catch(e => console.log('알림음 재생 실패:', e));
+    }
 }
 
 // 달력 토글
@@ -139,7 +131,6 @@ function toggleCalendar() {
         calendar.style.display = 'none';
         toggleText.textContent = '달력 열기';
     }
-    resetLockTimer();
 }
 
 // 달력 렌더링
@@ -288,7 +279,7 @@ function renderAttendanceMemberList(membersToShow) {
         const originalIndex = members.indexOf(member);
         const alreadyChecked = member.attendanceDates && member.attendanceDates.includes(selectedDate);
         const currentCount = member.currentCount || 0;
-        const targetCount = member.targetCount || 8;
+        const targetCount = member.targetCount || 0;
 
         const item = document.createElement('div');
         item.style.cssText = 'padding: 15px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background 0.3s;';
@@ -366,7 +357,6 @@ function toggleAttendance(memberIndex) {
             showAttendanceAlert(member.name, member.currentCount, targetCount);
         }
         else if (targetCount > 0 && member.currentCount >= targetCount) {
-            // 출석 완료 처리
             member.attendanceDates.forEach(date => {
                 if (!member.attendanceHistory.includes(date)) {
                     member.attendanceHistory.push(date);
@@ -379,7 +369,6 @@ function toggleAttendance(memberIndex) {
             saveToFirebase();
             renderMembers();
             
-            // 출석 완료 알림 모달 표시 (SMS 버튼 포함)
             showAttendanceCompleteModal(member.name, member.phone, targetCount);
         } else if (targetCount > 0) {
             showAlert(`${member.name} 출석 체크 완료! (${member.currentCount}/${targetCount}회)`);
@@ -408,7 +397,7 @@ function toggleAttendance(memberIndex) {
     closeAttendanceSelectModal();
 }
 
-// 출석 완료 모달 표시 (SMS 버튼 포함)
+// 출석 완료 모달 표시
 function showAttendanceCompleteModal(memberName, memberPhone, targetCount) {
     const modal = document.createElement('div');
     modal.id = 'attendanceCompleteModal';
@@ -435,7 +424,6 @@ function showAttendanceCompleteModal(memberName, memberPhone, targetCount) {
     `;
     document.body.appendChild(modal);
     
-    // 모달 외부 클릭 시 닫기
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             closeAttendanceCompleteModal();
@@ -445,7 +433,6 @@ function showAttendanceCompleteModal(memberName, memberPhone, targetCount) {
     playNotificationSound();
 }
 
-// 출석 완료 모달 닫기
 function closeAttendanceCompleteModal() {
     const modal = document.getElementById('attendanceCompleteModal');
     if (modal) {

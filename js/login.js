@@ -15,8 +15,11 @@ let currentUser = {
 
 // 로그인 상태 초기화
 function initializeLoginSystem() {
-    // 세션 스토리지에서 로그인 정보 복원
-    const savedUser = sessionStorage.getItem('currentUser');
+    // 로그인 유지가 체크되어 있으면 localStorage 사용, 아니면 sessionStorage 사용
+    const rememberLogin = localStorage.getItem('rememberLogin') === 'true';
+    const storage = rememberLogin ? localStorage : sessionStorage;
+    
+    const savedUser = storage.getItem('currentUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
     }
@@ -27,6 +30,7 @@ function initializeLoginSystem() {
 function login() {
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
+    const rememberMe = document.getElementById('rememberLogin').checked;
 
     if (!username || !password) {
         showAlert('아이디와 비밀번호를 입력해주세요!');
@@ -42,7 +46,7 @@ function login() {
             username: username,
             id: 'admin'
         };
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        saveLoginState(rememberMe);
         closeLoginModal();
         showAlert(`환영합니다, ${username}님! (관리자)`);
         updateUIByRole();
@@ -60,7 +64,7 @@ function login() {
                 username: username,
                 id: subAdmin.id
             };
-            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            saveLoginState(rememberMe);
             closeLoginModal();
             showAlert(`환영합니다, ${username}님! (부관리자)`);
             updateUIByRole();
@@ -69,6 +73,19 @@ function login() {
     }
 
     showAlert('아이디 또는 비밀번호가 잘못되었습니다!');
+}
+
+// 로그인 상태 저장 헬퍼 함수
+function saveLoginState(rememberMe) {
+    if (rememberMe) {
+        localStorage.setItem('rememberLogin', 'true');
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        sessionStorage.removeItem('currentUser');
+    } else {
+        localStorage.removeItem('rememberLogin');
+        localStorage.removeItem('currentUser');
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+    }
 }
 
 // 로그아웃 함수
@@ -80,6 +97,8 @@ function logout() {
             id: ''
         };
         sessionStorage.removeItem('currentUser');
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('rememberLogin');
         showAlert('로그아웃되었습니다.');
         updateUIByRole();
         clearForm();
@@ -89,32 +108,29 @@ function logout() {
 // 권한에 따른 UI 업데이트
 function updateUIByRole() {
     const role = currentUser.role;
-    const loginInfo = document.getElementById('loginInfo');
     const currentCountInput = document.getElementById('currentCount');
     const privateMemoSection = document.getElementById('privateMemoSection');
     const updateBtn = document.getElementById('updateBtn');
-    const loginBtn = document.querySelector('.login-btn');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const settingsUserStatus = document.getElementById('settingsUserStatus');
+    const settingsLogoutBtn = document.getElementById('settingsLogoutBtn');
     
-    // 로그인 상태 표시
-    if (role === USER_ROLES.GUEST) {
-        // 비로그인 상태
-        if (loginInfo) {
-            loginInfo.innerHTML = '<span style="color: white;">👤 손님</span>';
+    // 설정 모달의 로그인 상태 표시
+    if (settingsUserStatus) {
+        if (role === USER_ROLES.GUEST) {
+            settingsUserStatus.textContent = '👤 손님';
+            settingsUserStatus.style.color = '#999';
+        } else {
+            const roleText = role === USER_ROLES.ADMIN ? '👑 관리자' : '🔰 부관리자';
+            const roleColor = role === USER_ROLES.ADMIN ? '#FFD700' : '#4FC3F7';
+            settingsUserStatus.innerHTML = `<span style="color: ${roleColor};">${roleText}</span> ${currentUser.username}`;
         }
-        if (loginBtn) loginBtn.style.display = 'block';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    } else {
-        // 로그인 상태
-        const roleText = role === USER_ROLES.ADMIN ? '👑 관리자' : '🔰 부관리자';
-        const roleColor = role === USER_ROLES.ADMIN ? '#FFD700' : '#4FC3F7';
-        if (loginInfo) {
-            loginInfo.innerHTML = `<span style="color: white; font-weight: 600;">${roleText} ${currentUser.username}</span>`;
-        }
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'block';
     }
-
+    
+    // 설정 모달의 로그아웃 버튼
+    if (settingsLogoutBtn) {
+        settingsLogoutBtn.style.display = role === USER_ROLES.GUEST ? 'none' : 'block';
+    }
+    
     // 수정 버튼 상태
     if (updateBtn) {
         if (role === USER_ROLES.GUEST) {
@@ -156,6 +172,17 @@ function openLoginModal() {
 // 로그인 모달 닫기
 function closeLoginModal() {
     document.getElementById('loginModal').classList.remove('active');
+}
+
+// 설정 아이콘 클릭 처리
+function handleSettingsClick() {
+    // 로그인되어 있지 않으면 로그인 모달 띄우기
+    if (!hasEditPermission()) {
+        openLoginModal();
+    } else {
+        // 로그인되어 있으면 기존 설정 열기
+        openSettings();
+    }
 }
 
 // 권한 확인 헬퍼 함수

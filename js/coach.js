@@ -1,6 +1,8 @@
 // 코치 pill 버튼 렌더링
 function renderCoachButtons() {
     const container = document.getElementById('coachBtnGroup');
+    if (!container) return;
+    
     container.innerHTML = '';
 
     const activeCoaches = settings.coaches.filter(name => name && name.trim() !== '');
@@ -53,8 +55,6 @@ function setSelectedCoach(coachName) {
     }
 }
 
-// ========== 코치별 회원 목록 렌더링 함수들 ==========
-
 // 코치별 회원 수 계산
 function countMembersByCoach() {
     const coachCounts = {};
@@ -82,14 +82,13 @@ function renderMembersByCoach() {
     // 총회원수 옆에 코치별 회원수 표시
     let countText = `${members.length}명`;
     
-    // 코치별 회원수 추가 (코치가 있는 경우만)
+    // 코치별 회원수 추가
     const activeCoaches = Object.keys(coachCounts);
     if (activeCoaches.length > 0) {
         const coachCountTexts = activeCoaches.map(coach => 
             `${coach}:${coachCounts[coach]}`
         );
         
-        // 미선택 회원이 있는 경우 추가
         if (noCoachCount.count > 0) {
             coachCountTexts.push(`미선택:${noCoachCount.count}`);
         }
@@ -107,7 +106,7 @@ function renderMembersByCoach() {
     const noCoachMembers = [];
     
     // 검색어가 있는 경우 필터링
-    let targetMembers = members;
+    let targetMembers = filteredMembers.length > 0 ? filteredMembers : members;
     if (searchTerm) {
         targetMembers = members.filter(member => {
             return member.name.toLowerCase().includes(searchTerm) ||
@@ -142,15 +141,13 @@ function renderMembersByCoach() {
     
     let html = '';
     
-    // 코치별로 섹션 생성 (코치 이름 순 정렬)
+    // 코치별로 섹션 생성
     const sortedCoaches = Object.keys(membersByCoach).sort();
     
-    // 각 코치별 섹션
     sortedCoaches.forEach(coach => {
         const coachMembers = membersByCoach[coach];
         if (coachMembers.length === 0) return;
         
-        // 코치별 회원 수
         const coachMemberCount = coachMembers.length;
         
         html += `
@@ -168,7 +165,7 @@ function renderMembersByCoach() {
         `;
     });
     
-    // 미선택 회원 섹션 (있는 경우만)
+    // 미선택 회원 섹션
     if (noCoachMembers.length > 0) {
         html += `
             <div class="coach-section">
@@ -188,7 +185,7 @@ function renderMembersByCoach() {
     listEl.innerHTML = html;
 }
 
-// 코치별 회원 목록 렌더링 (공통 함수)
+// 코치별 회원 목록 렌더링
 function renderCoachMembersList(membersList) {
     return membersList.map((member, index) => {
         const originalIndex = members.indexOf(member);
@@ -197,21 +194,12 @@ function renderCoachMembersList(membersList) {
 
         let scheduleBadges = '';
         
-        // 새로운 schedules 배열 형식
         if (member.schedules && member.schedules.length > 0) {
             member.schedules.forEach(schedule => {
                 if (schedule.day && schedule.startTime && schedule.endTime) {
                     scheduleBadges += `<span class="schedule-badge">${dayNames[schedule.day]} ${schedule.startTime}~${schedule.endTime}</span>`;
                 }
             });
-        } else {
-            // 기존 day1, day2 형식 (하위 호환)
-            if (member.day1 && member.startTime1 && member.endTime1) {
-                scheduleBadges += `<span class="schedule-badge">${dayNames[member.day1]} ${member.startTime1}~${member.endTime1}</span>`;
-            }
-            if (member.day2 && member.startTime2 && member.endTime2) {
-                scheduleBadges += `<span class="schedule-badge">${dayNames[member.day2]} ${member.startTime2}~${member.endTime2}</span>`;
-            }
         }
 
         const currentCount = member.currentCount || 0;
@@ -226,8 +214,9 @@ function renderCoachMembersList(membersList) {
             `;
         }
 
-        const editBtnClass = isUnlocked ? 'btn-edit' : 'btn-edit btn-edit-disabled btn-hidden';
-        const deleteBtnClass = isUnlocked ? 'btn-delete' : 'btn-delete btn-delete-disabled btn-hidden';
+        const hasPermission = hasEditPermission();
+        const editBtnClass = hasPermission ? 'btn-edit' : 'btn-edit btn-edit-disabled btn-hidden';
+        const deleteBtnClass = hasPermission ? 'btn-delete' : 'btn-delete btn-delete-disabled btn-hidden';
 
         return `
         <div class="member-card">
@@ -239,10 +228,10 @@ function renderCoachMembersList(membersList) {
                         ${attendanceCount}
                     </div>
                     <div class="member-actions">
-                        <button class="${editBtnClass}" data-index="${originalIndex}" onclick="editMember(${originalIndex}); resetLockTimer();">
+                        <button class="${editBtnClass}" data-index="${originalIndex}" onclick="editMember(${originalIndex});">
                             수정
                         </button>
-                        <button class="${deleteBtnClass}" data-index="${originalIndex}" onclick="checkLockBeforeDelete(${originalIndex});">
+                        <button class="${deleteBtnClass}" data-index="${originalIndex}" onclick="checkPermissionBeforeDelete(${originalIndex});">
                             삭제
                         </button>
                     </div>

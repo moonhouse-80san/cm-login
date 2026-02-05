@@ -1,7 +1,8 @@
 // 현재 수정 중인 회원의 출석 초기화
 function resetCurrentAttendance() {
-    if (!isUnlocked) {
-        showAlert('먼저 잠금을 해제해주세요!');
+    if (!hasEditPermission()) {
+        showAlert('먼저 로그인해주세요!');
+        openLoginModal();
         return;
     }
 
@@ -44,7 +45,6 @@ function confirmResetAttendance() {
     }
     
     showAlert(`${member.name} 회원의 출석이 초기화되었습니다. (0/${member.targetCount || 0}회)\n출석 기록은 유지됩니다.`);
-    resetLockTimer();
 }
 
 // 출석 초기화 모달 닫기
@@ -56,7 +56,6 @@ function closeConfirmModal() {
 function showDeleteModal(index) {
     deleteIndex = index;
     document.getElementById('deleteModal').classList.add('active');
-    resetLockTimer();
 }
 
 function confirmDelete() {
@@ -69,7 +68,6 @@ function confirmDelete() {
         deleteIndex = null;
         closeModal();
         showAlert('회원이 삭제되었습니다!');
-        resetLockTimer();
     }
 }
 
