@@ -1,0 +1,19 @@
+{
+  "name": "로그인 회원관리 앱",
+  "short_name": "LogIn회원",
+  "description": "회원 정보를 관리하는 웹 앱",
+  "start_url": "/cm-login/",
+  "display": "standalone",
+  "background_color": "transparent",
+  "theme_color": "#2196F3",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
