@@ -1,0 +1,40 @@
+1. 2월 5일 잠금완성형에서 수정된 파일(클로드)
+	index.html
+	base.js
+	member.js
+	settings.js
+
+	[오류내용]
+	코치별 검색이 안됨
+	로그인 팝업에 로그인 유지 버턴 생성
+	회원추가 수정에 팝업도 출력되지 않고 문제가 많음
+
+	회원추가시 팝업 안뜸 - 회원 가입은 됨
+	회원선택해서 수정을 누르면 "수정할 회원을 선택해주세요!"란 팝업 출력 - 수정안됨
+	초기화시 입력칸에 이전 입력값들 그대로 선택 - 담당코치, 성별, 생년등이 남아 있음  
+
+	form.js:28 Uncaught ReferenceError: isUnlocked is not defined
+	(anonymous) @ form.js:28
+	4form.js:346 Uncaught ReferenceError: isUnlocked is not defined
+	editMember @ form.js:346
+	onclick @ index.html:1
+	2calendar.js:142 Uncaught ReferenceError: resetLockTimer is not defined
+	toggleCalendar @ calendar.js:142
+	onclick @ index.html:58
+	coach.js:229 Uncaught ReferenceError: isUnlocked is not defined
+	(anonymous) @ coach.js:229
+	renderCoachMembersList @ coach.js:193
+	(anonymous) @ coach.js:165
+	renderMembersByCoach @ coach.js:149
+	sortMembers @ member.js:55
+	onclick @ index.html:79
+	form.js:445 Uncaught ReferenceError: isUnlocked is not defined
+	clearForm @ form.js:445
+	onclick @ index.html:294
+	form.js:346 Uncaught ReferenceError: isUnlocked is not defined
+	editMember @ form.js:346
+	onclick @ index.html:1
+	5modal.js:3 Uncaught ReferenceError: isUnlocked is not defined
+	resetCurrentAttendance @ modal.js:3
+	onclick @ index.html:140
+	form.js:445 Uncaught ReferenceError: isUnlocked is not defined
