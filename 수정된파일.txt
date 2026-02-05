@@ -10,31 +10,61 @@
 	회원추가 수정에 팝업도 출력되지 않고 문제가 많음
 
 	회원추가시 팝업 안뜸 - 회원 가입은 됨
+	삭제는 정상 작동
 	회원선택해서 수정을 누르면 "수정할 회원을 선택해주세요!"란 팝업 출력 - 수정안됨
 	초기화시 입력칸에 이전 입력값들 그대로 선택 - 담당코치, 성별, 생년등이 남아 있음  
 
 	form.js:28 Uncaught ReferenceError: isUnlocked is not defined
+	    at HTMLDocument.<anonymous> (form.js:28:9)
 	(anonymous) @ form.js:28
-	4form.js:346 Uncaught ReferenceError: isUnlocked is not defined
-	editMember @ form.js:346
-	onclick @ index.html:1
-	2calendar.js:142 Uncaught ReferenceError: resetLockTimer is not defined
-	toggleCalendar @ calendar.js:142
-	onclick @ index.html:58
-	coach.js:229 Uncaught ReferenceError: isUnlocked is not defined
-	(anonymous) @ coach.js:229
-	renderCoachMembersList @ coach.js:193
-	(anonymous) @ coach.js:165
-	renderMembersByCoach @ coach.js:149
-	sortMembers @ member.js:55
-	onclick @ index.html:79
+	cm-login/:1 Unchecked runtime.lastError: The message port closed before a response was received.
 	form.js:445 Uncaught ReferenceError: isUnlocked is not defined
+	    at clearForm (form.js:445:5)
+	    at addMember (form.js:191:5)
+	    at HTMLButtonElement.onclick (cm-login/:292:108)
 	clearForm @ form.js:445
-	onclick @ index.html:294
-	form.js:346 Uncaught ReferenceError: isUnlocked is not defined
-	editMember @ form.js:346
-	onclick @ index.html:1
-	5modal.js:3 Uncaught ReferenceError: isUnlocked is not defined
-	resetCurrentAttendance @ modal.js:3
-	onclick @ index.html:140
+	addMember @ form.js:191
+	onclick @ cm-login/:292
+	modal.js:59 Uncaught ReferenceError: resetLockTimer is not defined
+	    at showDeleteModal (modal.js:59:5)
+	    at checkPermissionBeforeDelete (login.js:187:5)
+	    at HTMLButtonElement.onclick (cm-login/:1:1)
+	showDeleteModal @ modal.js:59
+	checkPermissionBeforeDelete @ login.js:187
+	onclick @ cm-login/:1
+	modal.js:72 Uncaught ReferenceError: resetLockTimer is not defined
+	    at confirmDelete (modal.js:72:9)
+	    at HTMLButtonElement.onclick (cm-login/:447:80)
+	confirmDelete @ modal.js:72
+	onclick @ cm-login/:447
 	form.js:445 Uncaught ReferenceError: isUnlocked is not defined
+	    at clearForm (form.js:445:5)
+	    at addMember (form.js:191:5)
+	    at HTMLButtonElement.onclick (cm-login/:292:108)
+	clearForm @ form.js:445
+	addMember @ form.js:191
+	onclick @ cm-login/:292
+	form.js:346 Uncaught ReferenceError: isUnlocked is not defined
+	    at editMember (form.js:346:5)
+	    at HTMLButtonElement.onclick (cm-login/:1:1)
+	editMember @ form.js:346
+	onclick @ cm-login/:1
+	form.js:346 Uncaught ReferenceError: isUnlocked is not defined
+	    at editMember (form.js:346:5)
+	    at HTMLButtonElement.onclick (cm-login/:1:1)
+	editMember @ form.js:346
+	onclick @ cm-login/:1
+	2form.js:445 Uncaught ReferenceError: isUnlocked is not defined
+	    at clearForm (form.js:445:5)
+	    at HTMLButtonElement.onclick (cm-login/:294:110)
+	clearForm @ form.js:445
+	onclick @ cm-login/:294
+	calendar.js:142 Uncaught ReferenceError: resetLockTimer is not defined
+	    at toggleCalendar (calendar.js:142:5)
+	    at HTMLButtonElement.onclick (cm-login/:58:112)
+	toggleCalendar @ calendar.js:142
+	onclick @ cm-login/:58
+	favicon.ico:1  GET https://moonhouse-80san.github.io/favicon.ico 404 (Not Found)
+	form.js:346 Uncaught ReferenceError: isUnlocked is not defined
+	    at editMember (form.js:346:5)
+	    at HTMLButtonElement.onclick (cm-login/:1:1)
