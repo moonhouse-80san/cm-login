@@ -72,9 +72,9 @@ function sendWelcomeSMS(memberName, memberPhone) {
     }
 }
 
-// 스케줄 알림 모달 표시
+// 레슨 알림 모달 표시
 function showAttendanceAlert(memberName, currentCount, targetCount) {
-    const message = '<strong>' + memberName + '</strong> 회원님<br>현재 스케줄: <strong>' + currentCount + '회</strong> / 목표: <strong>' + targetCount + '회</strong><br><br>회비입금이 임박했습니다!';
+    const message = '<strong>' + memberName + '</strong> 회원님<br>현재 레슨: <strong>' + currentCount + '회</strong> / 목표: <strong>' + targetCount + '회</strong><br><br>회비입금이 임박했습니다!';
     document.getElementById('attendanceAlertMessage').innerHTML = message;
     document.getElementById('attendanceAlertModal').classList.add('active');
     playNotificationSound();
@@ -84,7 +84,7 @@ function closeAttendanceAlert() {
     document.getElementById('attendanceAlertModal').classList.remove('active');
 }
 
-// 스케줄 완료 SMS 발송
+// 레슨 완료 SMS 발송
 function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     if (!memberPhone) {
         showAlert('회원의 전화번호가 등록되어 있지 않습니다.');
@@ -96,7 +96,7 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     const bank = settings.bankAccount?.bank || '';
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
-    let message = memberName + '회원님 스케줄 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다.';
+    let message = memberName + '회원님 레슨 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다.';
     
     if (bank && accountNumber) {
         message += '\n계좌번호 : ' + bank + ' ' + accountNumber;
@@ -114,12 +114,12 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
         
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy).then(() => {
-                showSMSCopyModal(phoneNumber, message, '스케줄 완료 문자');
+                showSMSCopyModal(phoneNumber, message, '레슨 완료 문자');
             }).catch(() => {
-                showSMSTextModal(phoneNumber, message, '스케줄 완료 문자');
+                showSMSTextModal(phoneNumber, message, '레슨 완료 문자');
             });
         } else {
-            showSMSTextModal(phoneNumber, message, '스케줄 완료 문자');
+            showSMSTextModal(phoneNumber, message, '레슨 완료 문자');
         }
     }
 }
@@ -285,7 +285,7 @@ function selectDate(year, month, date) {
     });
     
     if (!hasMembersWithTarget) {
-        showAlert('목표 스케줄 횟수가 설정된 회원이 없습니다.\n회원 정보에서 목표 스케줄 횟수를 설정해주세요.');
+        showAlert('목표 레슨 횟수가 설정된 회원이 없습니다.\n회원 정보에서 목표 레슨 횟수를 설정해주세요.');
         return;
     }
 
@@ -310,7 +310,7 @@ function showAttendanceSelectModal() {
     });
 
     if (validMembers.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">목표 스케줄 횟수가 설정된 회원이 없습니다.<br>회원 정보에서 목표 스케줄 횟수를 설정해주세요.</p>';
+        list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">목표 레슨 횟수가 설정된 회원이 없습니다.<br>회원 정보에서 목표 레슨 횟수를 설정해주세요.</p>';
         modal.classList.add('active');
         return;
     }
@@ -417,18 +417,18 @@ function toggleAttendance(memberIndex) {
             
             showAttendanceCompleteModal(member.name, member.phone, targetCount);
         } else if (targetCount > 0) {
-            showAlert(member.name + ' 스케줄 체크 완료! (' + member.currentCount + '/' + targetCount + '회)');
+            showAlert(member.name + ' 레슨 체크 완료! (' + member.currentCount + '/' + targetCount + '회)');
         } else {
-            showAlert(member.name + ' 스케줄 체크 완료!');
+            showAlert(member.name + ' 레슨 체크 완료!');
         }
     } else {
         member.attendanceDates.splice(dateIndex, 1);
         member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
         const targetCount = member.targetCount || 0;
         if (targetCount > 0) {
-            showAlert(member.name + ' 스케줄이 취소되었습니다. (' + member.currentCount + '/' + targetCount + '회)');
+            showAlert(member.name + ' 레슨이 취소되었습니다. (' + member.currentCount + '/' + targetCount + '회)');
         } else {
-            showAlert(member.name + ' 스케줄이 취소되었습니다.');
+            showAlert(member.name + ' 레슨이 취소되었습니다.');
         }
     }
 
@@ -443,19 +443,19 @@ function toggleAttendance(memberIndex) {
     closeAttendanceSelectModal();
 }
 
-// 스케줄 완료 모달 표시
+// 레슨 완료 모달 표시
 function showAttendanceCompleteModal(memberName, memberPhone, targetCount) {
     const modal = document.createElement('div');
     modal.id = 'attendanceCompleteModal';
     modal.className = 'modal active attendance-alert-modal';
     modal.innerHTML = '<div class="modal-content" style="text-align: center; max-width: 400px;">' +
         '<div class="attendance-alert-icon">🎉</div>' +
-        '<h2 style="color: #4CAF50; font-size: 28px; margin-bottom: 15px;">스케줄 완료!</h2>' +
+        '<h2 style="color: #4CAF50; font-size: 28px; margin-bottom: 15px;">레슨 완료!</h2>' +
         '<p style="font-size: 18px; color: #666; margin-bottom: 25px; line-height: 1.6;">' +
             '<strong>' + memberName + '</strong> 회원님<br>' +
             '목표 <strong>' + targetCount + '회</strong>를 달성했습니다!<br>' +
-            '스케줄 횟수가 초기화되었습니다.<br>' +
-            '<small style="color: #999;">(스케줄 기록은 유지됩니다)</small>' +
+            '레슨 횟수가 초기화되었습니다.<br>' +
+            '<small style="color: #999;">(레슨 기록은 유지됩니다)</small>' +
         '</p>' +
         '<div class="modal-buttons" style="flex-direction: column; gap: 10px;">' +
             '<button class="btn" style="background: #4CAF50; width: 100%; padding: 15px;" onclick="sendAttendanceCompleteSMS(\'' + memberName + '\', \'' + memberPhone + '\', ' + targetCount + '); closeAttendanceCompleteModal();">' +
