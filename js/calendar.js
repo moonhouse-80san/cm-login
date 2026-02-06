@@ -15,13 +15,15 @@ function sendWelcomeSMS(memberName, memberPhone) {
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
     // 계좌번호가 설정되어 있으면 포함, 아니면 제외
-    let message = `${memberName}회원님 ${clubName}에 회원이 되신 것을 축하 드립니다.`;
+    let message = `${memberName}회원님 회원이 되신 것을 축하 드립니다.\n즐거운 탁구 생활이 되시기를 바랍니다.`;
     
     if (bank && accountNumber) {
         message += `\n계좌번호 : ${bank} ${accountNumber}`;
     }
     
     message += `\n감사합니다.`;
+	
+	\n\n- ${clubName}`;
     
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -64,7 +66,15 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     
     const phoneNumber = String(memberPhone).replace(/-/g, '');
     const clubName = settings.clubName || '탁구클럽';
-    const message = `${memberName}회원님 스케줄 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다.\n감사합니다.\n\n- ${clubName}`;
+    const message = `${memberName}회원님 스케줄 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다..`;
+    
+    if (bank && accountNumber) {
+        message += `\n계좌번호 : ${bank} ${accountNumber}`;
+    }
+    
+    message += `\n감사합니다.`;
+	
+	\n\n- ${clubName}`;
     
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
