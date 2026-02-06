@@ -59,6 +59,7 @@
 	
 	[사항6]
 	- 회원 등록시 sms문자 보내기
+	계좌번호 설정에서 작성
 	base.js
 	calendar.js
 	form.js
