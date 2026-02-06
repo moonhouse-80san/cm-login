@@ -243,7 +243,7 @@ function showMemberDetails(index) {
     const targetCount = member.targetCount || 0;
     const currentCount = member.currentCount || 0;
     if (targetCount > 0) {
-        detailsHTML += `<tr><td>📊 현재 스케줄:</td><td>${currentCount}/${targetCount}회</td></tr>`;
+        detailsHTML += `<tr><td>📊 현재 레슨:</td><td>${currentCount}/${targetCount}회</td></tr>`;
     }
     
     detailsHTML += `
@@ -322,7 +322,7 @@ function showMemberDetails(index) {
     if (allDates.length > 0) {
         detailsHTML += `
             <div class="member-details-section">
-                <h3>스케줄 기록 (전체 ${allDates.length}건)</h3>
+                <h3>레슨 기록 (전체 ${allDates.length}건)</h3>
                 <div class="attendance-dates">
         `;
         const sortedDates = [...allDates].sort((a, b) => b.localeCompare(a)).slice(0, 20);
@@ -393,7 +393,7 @@ function showMemberDetails(index) {
     });
 }
 
-// 회원의 모든 스케줄 날짜 가져오기
+// 회원의 모든 레슨 날짜 가져오기
 function getAllAttendanceDates(member) {
     const history = member.attendanceHistory || [];
     const current = member.attendanceDates || [];

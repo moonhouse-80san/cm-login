@@ -167,7 +167,7 @@
     font-weight: normal;
 }
 
-/* 스케줄 관리 배지 */
+/* 레슨 관리 배지 */
 .attendance-count {
     display: inline-flex;
     align-items: center;

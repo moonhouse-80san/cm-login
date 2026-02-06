@@ -154,7 +154,7 @@ function updateUIByRole() {
         }
     }
 
-    // 현재 스케줄 횟수 입력란
+    // 현재 레슨 횟수 입력란
     if (currentCountInput) {
         if (role === USER_ROLES.GUEST) {
             currentCountInput.setAttribute('readonly', true);
