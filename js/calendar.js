@@ -2,6 +2,36 @@ let currentYear = 2026;
 let currentMonth = 0;
 let selectedDate = null;
 
+// 달력 토글 함수
+function toggleCalendar() {
+    if (members.length === 0) {
+        showAlert('등록된 회원이 없습니다.');
+        return;
+    }
+    
+    const hasMembersWithTarget = members.some(member => {
+        const targetCount = member.targetCount || 0;
+        return targetCount > 0;
+    });
+    
+    if (!hasMembersWithTarget) {
+        showAlert('목표 레슨 횟수가 설정된 회원이 없습니다.\n회원 정보에서 목표 레슨 횟수를 설정해주세요.');
+        return;
+    }
+    
+    const calendar = document.getElementById('formCalendar');
+    const toggleText = document.getElementById('calendarToggleText');
+    
+    if (calendar.style.display === 'none' || calendar.style.display === '') {
+        calendar.style.display = 'block';
+        toggleText.textContent = '달력 닫기';
+        renderFormCalendar();
+    } else {
+        calendar.style.display = 'none';
+        toggleText.textContent = '달력 열기';
+    }
+}
+
 // 회원 추가 시 환영 SMS 발송
 function sendWelcomeSMS(memberName, memberPhone) {
     if (!memberPhone) {
@@ -14,24 +44,21 @@ function sendWelcomeSMS(memberName, memberPhone) {
     const bank = settings.bankAccount?.bank || '';
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
-    // 계좌번호가 설정되어 있으면 포함, 아니면 제외
-    let message = `${memberName}회원님 회원이 되신 것을 축하 드립니다.\n즐거운 탁구 생활이 되시기를 바랍니다.`;
+    let message = memberName + '회원님 회원이 되신 것을 축하 드립니다.\n즐거운 탁구 생활이 되시기를 바랍니다.';
     
     if (bank && accountNumber) {
-        message += `\n계좌번호 : ${bank} ${accountNumber}`;
+        message += '\n계좌번호 : ' + bank + ' ' + accountNumber;
     }
     
-    message += `\n감사합니다.`;
-	
-	\n\n- ${clubName}`;
+    message += '\n감사합니다.\n\n- ' + clubName;
     
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-        const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+        const smsUrl = 'sms:' + phoneNumber + '?body=' + encodeURIComponent(message);
         window.location.href = smsUrl;
     } else {
-        const textToCopy = `전화번호: ${phoneNumber}\n\n메시지:\n${message}`;
+        const textToCopy = '전화번호: ' + phoneNumber + '\n\n메시지:\n' + message;
         
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -47,7 +74,7 @@ function sendWelcomeSMS(memberName, memberPhone) {
 
 // 스케줄 알림 모달 표시
 function showAttendanceAlert(memberName, currentCount, targetCount) {
-    const message = `<strong>${memberName}</strong> 회원님<br>현재 스케줄: <strong>${currentCount}회</strong> / 목표: <strong>${targetCount}회</strong><br><br>회비입금이 임박했습니다!`;
+    const message = '<strong>' + memberName + '</strong> 회원님<br>현재 스케줄: <strong>' + currentCount + '회</strong> / 목표: <strong>' + targetCount + '회</strong><br><br>회비입금이 임박했습니다!';
     document.getElementById('attendanceAlertMessage').innerHTML = message;
     document.getElementById('attendanceAlertModal').classList.add('active');
     playNotificationSound();
@@ -66,23 +93,24 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     
     const phoneNumber = String(memberPhone).replace(/-/g, '');
     const clubName = settings.clubName || '탁구클럽';
-    const message = `${memberName}회원님 스케줄 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다..`;
+    const bank = settings.bankAccount?.bank || '';
+    const accountNumber = settings.bankAccount?.accountNumber || '';
+    
+    let message = memberName + '회원님 스케줄 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다.';
     
     if (bank && accountNumber) {
-        message += `\n계좌번호 : ${bank} ${accountNumber}`;
+        message += '\n계좌번호 : ' + bank + ' ' + accountNumber;
     }
     
-    message += `\n감사합니다.`;
-	
-	\n\n- ${clubName}`;
+    message += '\n감사합니다.\n\n- ' + clubName;
     
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-        const smsUrl = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+        const smsUrl = 'sms:' + phoneNumber + '?body=' + encodeURIComponent(message);
         window.location.href = smsUrl;
     } else {
-        const textToCopy = `전화번호: ${phoneNumber}\n\n메시지:\n${message}`;
+        const textToCopy = '전화번호: ' + phoneNumber + '\n\n메시지:\n' + message;
         
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy).then(() => {
@@ -97,42 +125,43 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
 }
 
 // SMS 메시지를 모달로 표시
-function showSMSTextModal(phoneNumber, message, title = '문자 메시지') {
+function showSMSTextModal(phoneNumber, message, title) {
+    title = title || '문자 메시지';
+    const escapedMessage = message.replace(/`/g, '\\`').replace(/\n/g, '\\n');
+    
     const modal = document.createElement('div');
     modal.className = 'modal active';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2>📱 ${title}</h2>
-                <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
-            </div>
-            <div style="padding: 20px 0;">
-                <div style="margin-bottom: 15px;">
-                    <strong>받는 사람:</strong><br>
-                    <input type="text" value="${phoneNumber}" readonly 
-                           style="width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                </div>
-                <div>
-                    <strong>메시지:</strong><br>
-                    <textarea readonly style="width: 100%; min-height: 150px; padding: 10px; margin-top: 5px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit;">${message}</textarea>
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button style="background: #2196F3;" onclick="copySMSToClipboard('${phoneNumber}', \`${message.replace(/`/g, '\\`')}\`)">복사하기</button>
-                <button style="background: #9E9E9E;" onclick="this.closest('.modal').remove()">닫기</button>
-            </div>
-        </div>
-    `;
+    modal.innerHTML = '<div class="modal-content" style="max-width: 500px;">' +
+        '<div class="modal-header">' +
+            '<h2>📱 ' + title + '</h2>' +
+            '<button class="close-btn" onclick="this.closest(\'.modal\').remove()">×</button>' +
+        '</div>' +
+        '<div style="padding: 20px 0;">' +
+            '<div style="margin-bottom: 15px;">' +
+                '<strong>받는 사람:</strong><br>' +
+                '<input type="text" value="' + phoneNumber + '" readonly style="width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #e0e0e0; border-radius: 8px;">' +
+            '</div>' +
+            '<div>' +
+                '<strong>메시지:</strong><br>' +
+                '<textarea readonly style="width: 100%; min-height: 150px; padding: 10px; margin-top: 5px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit;">' + message + '</textarea>' +
+            '</div>' +
+        '</div>' +
+        '<div class="modal-buttons">' +
+            '<button style="background: #2196F3;" onclick="copySMSToClipboard(\'' + phoneNumber + '\', `' + escapedMessage + '`)">복사하기</button>' +
+            '<button style="background: #9E9E9E;" onclick="this.closest(\'.modal\').remove()">닫기</button>' +
+        '</div>' +
+    '</div>';
     document.body.appendChild(modal);
 }
 
 // SMS 복사 확인 모달
-function showSMSCopyModal(phoneNumber, message, title = '문자 메시지') {
-    showAlert(`${title}가 클립보드에 복사되었습니다!\n\n핸드폰으로 문자를 보내주세요.`);
+function showSMSCopyModal(phoneNumber, message, title) {
+    title = title || '문자 메시지';
+    showAlert(title + '가 클립보드에 복사되었습니다!\n\n핸드폰으로 문자를 보내주세요.');
 }
 
 function copySMSToClipboard(phoneNumber, message) {
-    const textToCopy = `전화번호: ${phoneNumber}\n\n메시지:\n${message}`;
+    const textToCopy = '전화번호: ' + phoneNumber + '\n\n메시지:\n' + message;
     
     const textArea = document.createElement('textarea');
     textArea.value = textToCopy;
@@ -159,43 +188,13 @@ function playNotificationSound() {
     }
 }
 
-// 달력 토글
-function toggleCalendar() {
-    if (members.length === 0) {
-        showAlert('등록된 회원이 없습니다.');
-        return;
-    }
-    
-    const hasMembersWithTarget = members.some(member => {
-        const targetCount = member.targetCount || 0;
-        return targetCount > 0;
-    });
-    
-    if (!hasMembersWithTarget) {
-        showAlert('목표 스케줄 횟수가 설정된 회원이 없습니다.\n회원 정보에서 목표 스케줄 횟수를 설정해주세요.');
-        return;
-    }
-    
-    const calendar = document.getElementById('formCalendar');
-    const toggleText = document.getElementById('calendarToggleText');
-    
-    if (calendar.style.display === 'none') {
-        calendar.style.display = 'block';
-        toggleText.textContent = '달력 닫기';
-        renderFormCalendar();
-    } else {
-        calendar.style.display = 'none';
-        toggleText.textContent = '달력 열기';
-    }
-}
-
 // 달력 렌더링
 function renderFormCalendar() {
     const grid = document.getElementById('formCalendarGrid');
     grid.innerHTML = '';
 
     const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
-    document.getElementById('formCalendarTitle').textContent = `${currentYear}년 ${monthNames[currentMonth]}`;
+    document.getElementById('formCalendarTitle').textContent = currentYear + '년 ' + monthNames[currentMonth];
 
     const dayHeaders = ['일', '월', '화', '수', '목', '금', '토'];
     dayHeaders.forEach(day => {
@@ -217,7 +216,7 @@ function renderFormCalendar() {
     for (let i = firstDay - 1; i >= 0; i--) {
         const day = document.createElement('div');
         day.className = 'calendar-day other-month';
-        day.innerHTML = `<div class="calendar-day-number">${daysInPrevMonth - i}</div>`;
+        day.innerHTML = '<div class="calendar-day-number">' + (daysInPrevMonth - i) + '</div>';
         grid.appendChild(day);
     }
 
@@ -230,7 +229,7 @@ function renderFormCalendar() {
             day.classList.add('today');
         }
 
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+        const dateStr = currentYear + '-' + String(currentMonth + 1).padStart(2, '0') + '-' + String(date).padStart(2, '0');
 
         let hasAttendance = false;
         members.forEach(member => {
@@ -244,12 +243,10 @@ function renderFormCalendar() {
             day.classList.add('has-attendance');
         }
 
-        day.innerHTML = `
-            <div class="calendar-day-number">${date}</div>
-            ${hasAttendance ? '<div class="calendar-attendance-dot"></div>' : ''}
-        `;
+        day.innerHTML = '<div class="calendar-day-number">' + date + '</div>' + 
+            (hasAttendance ? '<div class="calendar-attendance-dot"></div>' : '');
 
-        day.onclick = () => selectDate(currentYear, currentMonth, date);
+        day.onclick = function() { selectDate(currentYear, currentMonth, date); };
         grid.appendChild(day);
     }
 
@@ -258,7 +255,7 @@ function renderFormCalendar() {
     for (let date = 1; date <= remainingCells; date++) {
         const day = document.createElement('div');
         day.className = 'calendar-day other-month';
-        day.innerHTML = `<div class="calendar-day-number">${date}</div>`;
+        day.innerHTML = '<div class="calendar-day-number">' + date + '</div>';
         grid.appendChild(day);
     }
 }
@@ -292,7 +289,7 @@ function selectDate(year, month, date) {
         return;
     }
 
-    selectedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    selectedDate = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(date).padStart(2, '0');
     showAttendanceSelectModal();
 }
 
@@ -339,29 +336,22 @@ function renderAttendanceMemberList(membersToShow) {
 
         const item = document.createElement('div');
         item.style.cssText = 'padding: 15px; border-bottom: 1px solid #e0e0e0; cursor: pointer; transition: background 0.3s;';
-        item.innerHTML = `
-		<div style="display: flex; align-items: center; gap: 10px;">
-			<div style="flex: 1;">
-				<div class="member-title">
-					<span class="member-name">${member.name}</span>
-
-					<span class="attendance-count">
-						📊 ${currentCount}/${targetCount}회
-					</span>
-
-					${member.coach ? `<span class="coach-badge">🏋️${member.coach}</span>` : ''}
-				</div>
-			</div>
-
-			<div style="color: ${alreadyChecked ? '#4CAF50' : '#999'}; font-size: 24px;">
-				${alreadyChecked ? '✓' : '○'}
-			</div>
-		</div>
-        `;
+        item.innerHTML = '<div style="display: flex; align-items: center; gap: 10px;">' +
+            '<div style="flex: 1;">' +
+                '<div class="member-title">' +
+                    '<span class="member-name">' + member.name + '</span>' +
+                    '<span class="attendance-count">📊 ' + currentCount + '/' + targetCount + '회</span>' +
+                    (member.coach ? '<span class="coach-badge">🏋️' + member.coach + '</span>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div style="color: ' + (alreadyChecked ? '#4CAF50' : '#999') + '; font-size: 24px;">' +
+                (alreadyChecked ? '✓' : '○') +
+            '</div>' +
+        '</div>';
         
-        item.onmouseover = () => item.style.background = '#f8f9fa';
-        item.onmouseout = () => item.style.background = 'white';
-        item.onclick = () => toggleAttendance(originalIndex);
+        item.onmouseover = function() { item.style.background = '#f8f9fa'; };
+        item.onmouseout = function() { item.style.background = 'white'; };
+        item.onclick = function() { toggleAttendance(originalIndex); };
         
         list.appendChild(item);
     });
@@ -427,18 +417,18 @@ function toggleAttendance(memberIndex) {
             
             showAttendanceCompleteModal(member.name, member.phone, targetCount);
         } else if (targetCount > 0) {
-            showAlert(`${member.name} 스케줄 체크 완료! (${member.currentCount}/${targetCount}회)`);
+            showAlert(member.name + ' 스케줄 체크 완료! (' + member.currentCount + '/' + targetCount + '회)');
         } else {
-            showAlert(`${member.name} 스케줄 체크 완료!`);
+            showAlert(member.name + ' 스케줄 체크 완료!');
         }
     } else {
         member.attendanceDates.splice(dateIndex, 1);
         member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
         const targetCount = member.targetCount || 0;
         if (targetCount > 0) {
-            showAlert(`${member.name} 스케줄이 취소되었습니다. (${member.currentCount}/${targetCount}회)`);
+            showAlert(member.name + ' 스케줄이 취소되었습니다. (' + member.currentCount + '/' + targetCount + '회)');
         } else {
-            showAlert(`${member.name} 스케줄이 취소되었습니다.`);
+            showAlert(member.name + ' 스케줄이 취소되었습니다.');
         }
     }
 
@@ -458,26 +448,24 @@ function showAttendanceCompleteModal(memberName, memberPhone, targetCount) {
     const modal = document.createElement('div');
     modal.id = 'attendanceCompleteModal';
     modal.className = 'modal active attendance-alert-modal';
-    modal.innerHTML = `
-        <div class="modal-content" style="text-align: center; max-width: 400px;">
-            <div class="attendance-alert-icon">🎉</div>
-            <h2 style="color: #4CAF50; font-size: 28px; margin-bottom: 15px;">스케줄 완료!</h2>
-            <p style="font-size: 18px; color: #666; margin-bottom: 25px; line-height: 1.6;">
-                <strong>${memberName}</strong> 회원님<br>
-                목표 <strong>${targetCount}회</strong>를 달성했습니다!<br>
-                스케줄 횟수가 초기화되었습니다.<br>
-                <small style="color: #999;">(스케줄 기록은 유지됩니다)</small>
-            </p>
-            <div class="modal-buttons" style="flex-direction: column; gap: 10px;">
-                <button class="btn" style="background: #4CAF50; width: 100%; padding: 15px;" onclick="sendAttendanceCompleteSMS('${memberName}', '${memberPhone}', ${targetCount}); closeAttendanceCompleteModal();">
-                    📱 문자 메시지 보내기
-                </button>
-                <button class="btn" style="background: #2196F3; width: 100%; padding: 15px;" onclick="closeAttendanceCompleteModal()">
-                    확인
-                </button>
-            </div>
-        </div>
-    `;
+    modal.innerHTML = '<div class="modal-content" style="text-align: center; max-width: 400px;">' +
+        '<div class="attendance-alert-icon">🎉</div>' +
+        '<h2 style="color: #4CAF50; font-size: 28px; margin-bottom: 15px;">스케줄 완료!</h2>' +
+        '<p style="font-size: 18px; color: #666; margin-bottom: 25px; line-height: 1.6;">' +
+            '<strong>' + memberName + '</strong> 회원님<br>' +
+            '목표 <strong>' + targetCount + '회</strong>를 달성했습니다!<br>' +
+            '스케줄 횟수가 초기화되었습니다.<br>' +
+            '<small style="color: #999;">(스케줄 기록은 유지됩니다)</small>' +
+        '</p>' +
+        '<div class="modal-buttons" style="flex-direction: column; gap: 10px;">' +
+            '<button class="btn" style="background: #4CAF50; width: 100%; padding: 15px;" onclick="sendAttendanceCompleteSMS(\'' + memberName + '\', \'' + memberPhone + '\', ' + targetCount + '); closeAttendanceCompleteModal();">' +
+                '📱 문자 메시지 보내기' +
+            '</button>' +
+            '<button class="btn" style="background: #2196F3; width: 100%; padding: 15px;" onclick="closeAttendanceCompleteModal()">' +
+                '확인' +
+            '</button>' +
+        '</div>' +
+    '</div>';
     document.body.appendChild(modal);
     
     modal.addEventListener('click', function(e) {
