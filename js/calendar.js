@@ -15,7 +15,7 @@ function sendWelcomeSMS(memberName, memberPhone) {
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
     // 계좌번호가 설정되어 있으면 포함, 아니면 제외
-    let message = `${memberName}회원님 ${clubName}에 회원이 되신 것을 축하 드립니다.\n레슨 횟수가 마감하는 날 마감 문자가 갈 것입니다.\n마감 문자 받으시면 레슨비 송금해 주시거나, 다음 방문시 부탁 드립니다.`;
+    let message = `${memberName}회원님 ${clubName}에 회원이 되신 것을 축하 드립니다.`;
     
     if (bank && accountNumber) {
         message += `\n계좌번호 : ${bank} ${accountNumber}`;
