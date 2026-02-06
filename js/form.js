@@ -193,7 +193,16 @@ function addMember() {
     }
     
     clearForm();
-    showAlert('회원이 추가되었습니다!');
+    
+    // 자판 숨기기 위해 포커스 제거
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+    
+    // 약간의 지연 후 알림 표시
+    setTimeout(() => {
+        showAlert('회원이 추가되었습니다!');
+    }, 100);
     
     const formSection = document.querySelector('.form-section');
     if (formSection) {
@@ -306,7 +315,16 @@ function updateMember() {
     renderMembers();
     renderSchedule();
     clearForm();
-    showAlert('회원 정보가 수정되었습니다!');
+    
+    // 자판 숨기기 위해 포커스 제거
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+    
+    // 약간의 지연 후 알림 표시
+    setTimeout(() => {
+        showAlert('회원 정보가 수정되었습니다!');
+    }, 100);
     
     const formSection = document.querySelector('.form-section');
     if (formSection) {
