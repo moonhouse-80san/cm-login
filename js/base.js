@@ -33,8 +33,8 @@ let settings = {
     subAdmins: [],
     // 계좌번호 설정
     bankAccount: {
-        bank: 'IM뱅크',
-        accountNumber: '1234567890'
+        bank: '',
+        accountNumber: ''
     }
 };
 let firebaseDb = null;

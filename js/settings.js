@@ -126,8 +126,8 @@ function saveSettings() {
     
     // 계좌번호 설정 저장
     settings.bankAccount = {
-        bank: document.getElementById('bankName').value.trim() || 'IM뱅크',
-        accountNumber: document.getElementById('accountNumber').value.trim() || '1234567890'
+        bank: document.getElementById('bankName').value.trim() || '',
+        accountNumber: document.getElementById('accountNumber').value.trim() || ''
     };
 
     saveToFirebase();

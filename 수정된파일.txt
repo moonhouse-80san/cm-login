@@ -56,3 +56,11 @@
 	Coach.js 
 	Coach.css
 	member.js
+	
+	[사항6]
+	- 회원 등록시 sms문자 보내기
+	base.js
+	calendar.js
+	form.js
+	settings.js
+	index.html
