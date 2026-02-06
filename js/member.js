@@ -237,7 +237,7 @@ function showMemberDetails(index) {
         } else {
             skillText = `${member.skillLevel}부`;
         }
-        detailsHTML += `<tr><td>🏓 부수 (실력):</td><td>${skillText}</td></tr>`;
+        detailsHTML += `<tr><td>🏓 부수:</td><td>${skillText}</td></tr>`;
     }
     
     const targetCount = member.targetCount || 0;
