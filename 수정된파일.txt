@@ -57,7 +57,7 @@
 	Coach.css
 	member.js
 	
-	[사항6]
+	[사항6] - calendar.js 에서 문자 내용 수정
 	- 회원 등록시 sms문자 보내기
 	계좌번호 설정에서 작성
 	base.js
