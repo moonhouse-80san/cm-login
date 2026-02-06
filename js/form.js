@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 현재 출석 횟수 입력란 초기 상태 설정
+    // 현재 스케줄 횟수 입력란 초기 상태 설정
     const currentCountInput = document.getElementById('currentCount');
     if (currentCountInput) {
         if (!hasEditPermission()) {

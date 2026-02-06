@@ -46,7 +46,7 @@
         <div class="search-section">
             <!-- 달력 -->
             <div class="form-group full-width">
-                <label>출석 관리</label>
+                <label>스케줄 관리</label>
                 <button type="button" class="photo-btn" onclick="toggleCalendar()" style="margin-bottom: 0px;">
                     📅 <span id="calendarToggleText">달력 열기</span>
                 </button>
@@ -117,16 +117,16 @@
                     </div>
                 </div>
 
-                <!-- 출석 관리 필드 -->
+                <!-- 스케줄 관리 필드 -->
                 <div class="form-group">
-                    <label for="targetCount">출석 목표 횟수</label>
-                    <input type="number" id="targetCount" placeholder="0으로 설정 시 출석 관리 제외" value="0" min="0">
+                    <label for="targetCount">스케줄 목표 횟수</label>
+                    <input type="number" id="targetCount" placeholder="0으로 설정 시 스케줄 관리 제외" value="0" min="0">
                     <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                        ※ 0으로 설정하면 출석 관리에서 제외됩니다.
+                        ※ 0으로 설정하면 스케줄 관리에서 제외됩니다.
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="currentCount">현재 출석 횟수</label>
+                    <label for="currentCount">현재 스케줄 횟수</label>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <input type="number" id="currentCount" placeholder="0" value="0" min="0" readonly style="background: #f0f0f0; flex: 1;">
                         <button type="button" class="photo-btn" onclick="resetCurrentAttendance()" style="padding: 8px 12px; font-size: 12px; background: #FF9800;">
@@ -457,10 +457,10 @@
         </div>
     </div>
 
-    <!-- 출석 초기화 확인 모달 -->
+    <!-- 스케줄 초기화 확인 모달 -->
     <div id="confirmModal" class="modal">
         <div class="modal-content">
-            <p>현재 회원의 출석 횟수를 초기화하시겠습니까?<br><small style="color:#999;">(출석 기록은 유지됩니다)</small></p>
+            <p>현재 회원의 스케줄 횟수를 초기화하시겠습니까?<br><small style="color:#999;">(스케줄 기록은 유지됩니다)</small></p>
             <div class="modal-buttons">
                 <button style="background: #FF9800;" onclick="confirmResetAttendance()">초기화</button>
                 <button style="background: #9E9E9E;" onclick="closeConfirmModal()">취소</button>
@@ -495,11 +495,11 @@
     <script src="js/coach.js"></script>
     <script src="js/settings.js"></script>
 
-    <!-- 출석 알림 모달 -->
+    <!-- 스케줄 알림 모달 -->
     <div id="attendanceAlertModal" class="modal attendance-alert-modal">
         <div class="modal-content">
             <div class="attendance-alert-icon">⚠️</div>
-            <h2>출석 알림</h2>
+            <h2>스케줄 알림</h2>
             <p id="attendanceAlertMessage"></p>
             <div class="modal-buttons">
                 <button class="btn btn-primary" onclick="closeAttendanceAlert()">확인</button>
@@ -507,13 +507,13 @@
         </div>
     </div>
 
-    <!-- 출석 선택 모달 -->
+    <!-- 스케줄 선택 모달 -->
 	<div id="attendanceSelectModal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>출석 체크</h2>
+				<h2>스케줄 체크</h2>
 			</div>
-			<p>어떤 회원의 출석을 체크하시겠습니까?</p>
+			<p>어떤 회원의 스케줄을 체크하시겠습니까?</p>
 			<!-- 검색창 추가 (placeholder 수정) -->
 			<div style="margin: 15px 0;">
 				<input type="text" 

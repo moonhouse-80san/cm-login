@@ -167,7 +167,7 @@
     font-weight: normal;
 }
 
-/* 출석 관리 배지 */
+/* 스케줄 관리 배지 */
 .attendance-count {
     display: inline-flex;
     align-items: center;

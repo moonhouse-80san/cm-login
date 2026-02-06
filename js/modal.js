@@ -1,4 +1,4 @@
-// 현재 수정 중인 회원의 출석 초기화
+// 현재 수정 중인 회원의 스케줄 초기화
 function resetCurrentAttendance() {
     if (!hasEditPermission()) {
         showAlert('먼저 로그인해주세요!');
@@ -14,7 +14,7 @@ function resetCurrentAttendance() {
     document.getElementById('confirmModal').classList.add('active');
 }
 
-// 출석 초기화 실행
+// 스케줄 초기화 실행
 function confirmResetAttendance() {
     document.getElementById('confirmModal').classList.remove('active');
 
@@ -44,10 +44,10 @@ function confirmResetAttendance() {
         renderFormCalendar();
     }
     
-    showAlert(`${member.name} 회원의 출석이 초기화되었습니다. (0/${member.targetCount || 0}회)\n출석 기록은 유지됩니다.`);
+    showAlert(`${member.name} 회원의 스케줄이 초기화되었습니다. (0/${member.targetCount || 0}회)\n스케줄 기록은 유지됩니다.`);
 }
 
-// 출석 초기화 모달 닫기
+// 스케줄 초기화 모달 닫기
 function closeConfirmModal() {
     document.getElementById('confirmModal').classList.remove('active');
 }
