@@ -30,7 +30,12 @@ let settings = {
         username: 'admin',
         password: '0000'
     },
-    subAdmins: []
+    subAdmins: [],
+    // 계좌번호 설정
+    bankAccount: {
+        bank: 'IM뱅크',
+        accountNumber: '1234567890'
+    }
 };
 let firebaseDb = null;
 
@@ -76,6 +81,7 @@ function loadFromFirebase() {
             settings.coaches = data.coaches || ['', '', '', ''];
             settings.adminUser = data.adminUser || settings.adminUser;
             settings.subAdmins = data.subAdmins || [];
+            settings.bankAccount = data.bankAccount || settings.bankAccount;
 
             document.getElementById('clubNameDisplay').textContent = settings.clubName || '구장명을 설정하세요';
             updateFeePresetButtons();

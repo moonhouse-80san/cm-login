@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 현재 레슨 횟수 입력란 초기 상태 설정
+    // 현재 스케줄 횟수 입력란 초기 상태 설정
     const currentCountInput = document.getElementById('currentCount');
     if (currentCountInput) {
         if (!hasEditPermission()) {
@@ -183,6 +183,15 @@ function addMember() {
     filteredMembers = [...members];
     renderMembers();
     renderSchedule();
+    
+    // SMS 발송 여부 확인
+    if (member.phone) {
+        const sendSMS = confirm(`${member.name} 회원님께 환영 문자를 발송하시겠습니까?`);
+        if (sendSMS) {
+            sendWelcomeSMS(member.name, member.phone);
+        }
+    }
+    
     clearForm();
     showAlert('회원이 추가되었습니다!');
     

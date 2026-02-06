@@ -20,6 +20,12 @@ function openSettingsDialog() {
     document.getElementById('coachName2').value = settings.coaches[1] || '';
     document.getElementById('coachName3').value = settings.coaches[2] || '';
     document.getElementById('coachName4').value = settings.coaches[3] || '';
+    
+    // 계좌번호 설정
+    if (settings.bankAccount) {
+        document.getElementById('bankName').value = settings.bankAccount.bank || '';
+        document.getElementById('accountNumber').value = settings.bankAccount.accountNumber || '';
+    }
 
     renderSubAdminsList();
     document.getElementById('settingsModal').classList.add('active');
@@ -117,6 +123,12 @@ function saveSettings() {
     if (newPassword) {
         settings.adminUser.password = newPassword;
     }
+    
+    // 계좌번호 설정 저장
+    settings.bankAccount = {
+        bank: document.getElementById('bankName').value.trim() || 'IM뱅크',
+        accountNumber: document.getElementById('accountNumber').value.trim() || '1234567890'
+    };
 
     saveToFirebase();
     if (settings.clubName) {
@@ -182,7 +194,7 @@ function exportData() {
         
         const headers = [
             '이름', '전화번호', '이메일', '주소', '등록일(YYYY-MM-DD)', 
-            '월회비', '담당코치', '레슨목표횟수', '현재레슨횟수',
+            '월회비', '담당코치', '스케줄목표횟수', '현재스케줄횟수',
             '스케줄1_요일', '스케줄1_시작시간', '스케줄1_종료시간',
             '스케줄2_요일', '스케줄2_시작시간', '스케줄2_종료시간',
             '스케줄3_요일', '스케줄3_시작시간', '스케줄3_종료시간',
@@ -220,7 +232,9 @@ function exportData() {
             ['월회비 기본값2', settings.feePresets[1] || 0],
             ['월회비 기본값3', settings.feePresets[2] || 0],
             ['월회비 기본값4', settings.feePresets[3] || 0],
-            ['월회비 기본값5', settings.feePresets[4] || 0]
+            ['월회비 기본값5', settings.feePresets[4] || 0],
+            ['은행명', settings.bankAccount?.bank || ''],
+            ['계좌번호', settings.bankAccount?.accountNumber || '']
         ];
         
         const wsSettings = XLSX.utils.aoa_to_sheet(settingsData);
@@ -245,7 +259,7 @@ function downloadTemplate() {
     try {
         const templateData = [
             [
-                '이름', '전화번호', '이메일', '주소', '등록일(YYYY-MM-DD)', '월회비', '담당코치', '레슨목표횟수', '현재레슨횟수',
+                '이름', '전화번호', '이메일', '주소', '등록일(YYYY-MM-DD)', '월회비', '담당코치', '스케줄목표횟수', '현재스케줄횟수',
                 '스케줄1_요일', '스케줄1_시작시간', '스케줄1_종료시간',
                 '스케줄2_요일', '스케줄2_시작시간', '스케줄2_종료시간',
                 '스케줄3_요일', '스케줄3_시작시간', '스케줄3_종료시간',
@@ -427,6 +441,14 @@ function importData(event) {
                         else if (key === '월회비 기본값3') settings.feePresets[2] = parseInt(value) || 0;
                         else if (key === '월회비 기본값4') settings.feePresets[3] = parseInt(value) || 0;
                         else if (key === '월회비 기본값5') settings.feePresets[4] = parseInt(value) || 0;
+                        else if (key === '은행명') {
+                            if (!settings.bankAccount) settings.bankAccount = {};
+                            settings.bankAccount.bank = String(value || '');
+                        }
+                        else if (key === '계좌번호') {
+                            if (!settings.bankAccount) settings.bankAccount = {};
+                            settings.bankAccount.accountNumber = String(value || '');
+                        }
                     }
                 });
                 
