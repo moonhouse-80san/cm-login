@@ -528,10 +528,10 @@ function renderSchedule() {
         });
 
         scheduleHTML += `
-            <div class="day-section collapsed" data-day-section="${day}">
+            <div class="day-section" data-day-section="${day}">
                 <div class="day-section-header" onclick="toggleDaySection('${day}')">
                     <div class="day-title">
-                        <span class="toggle-icon">▶</span>
+                        <span class="toggle-icon">▼</span>
                         <span class="day-name">${dayNames[day]}</span>
                         <span class="day-count">${dayMembers.length}명</span>
                     </div>

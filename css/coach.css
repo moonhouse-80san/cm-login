@@ -1,3 +1,33 @@
+/* 코치 버튼 그룹 */
+#coachBtnGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.coach-btn {
+    padding: 8px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.coach-btn:hover {
+    border-color: #4CAF50;
+    background: #f1f8e9;
+}
+
+.coach-btn.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
 /* 코치 섹션 스타일 */
 .coach-section {
     margin-bottom: 15px;
