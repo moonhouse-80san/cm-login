@@ -288,31 +288,31 @@
         </div>
     </div>
 
-    <!-- 로그인 모달 -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔑 로그인</h2>
-                <button class="close-btn" onclick="closeLoginModal()">×</button>
-            </div>
-            <div class="login-form-group">
-                <label for="loginUsername">아이디</label>
-                <input type="text" id="loginUsername" placeholder="아이디를 입력하세요">
-            </div>
-            <div class="login-form-group">
-                <label for="loginPassword">비밀번호</label>
-                <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" onkeyup="if(event.key === 'Enter') login()">
-            </div>
-            <div class="login-form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                <input type="checkbox" id="rememberLogin" style="width: auto; margin: 0;">
-                <label for="rememberLogin" style="margin: 0; cursor: pointer; font-size: 14px;">로그인 상태 유지</label>
-            </div>
-            <div class="modal-buttons">
-                <button style="background: #2196F3;" onclick="login()">로그인</button>
-                <button style="background: #9E9E9E;" onclick="closeLoginModal()">취소</button>
-            </div>
-        </div>
-    </div>
+	<!-- 로그인 모달 -->
+	<div id="loginModal" class="modal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>🔑 로그인</h2>
+				<button class="close-btn" onclick="closeLoginModal()">×</button>
+			</div>
+			<div class="login-form-group">
+				<label for="loginUsername">아이디</label>
+				<input type="text" id="loginUsername" placeholder="아이디를 입력하세요" autocomplete="username">
+			</div>
+			<div class="login-form-group">
+				<label for="loginPassword">비밀번호</label>
+				<input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요" autocomplete="current-password" onkeyup="if(event.key === 'Enter') login()">
+			</div>
+			<div class="login-form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+				<input type="checkbox" id="rememberLogin" style="width: auto; margin: 0;">
+				<label for="rememberLogin" style="margin: 0; cursor: pointer; font-size: 14px;">로그인 상태 유지</label>
+			</div>
+			<div class="modal-buttons">
+				<button style="background: #2196F3;" onclick="login()">로그인</button>
+				<button style="background: #9E9E9E;" onclick="closeLoginModal()">취소</button>
+			</div>
+		</div>
+	</div>
 
     <!-- 카메라 모달 -->
     <div id="cameraModal" class="modal">
