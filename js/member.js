@@ -286,7 +286,7 @@ function showMemberDetails(index) {
             const formattedDate = formatDate(date);
             detailsHTML += '<div style="display: inline-flex; align-items: center; background: #e3f2fd; border-radius: 6px; padding: 4px 10px; margin-left: 10px;">' +
                 '<span style="color: #1976d2; font-size: 14px;">' + formattedDate + '</span>' +
-                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 8px;" onclick="showDeleteAttendanceDateModal(' + index + ', \'' + date + '\', \'current\')">×</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 8px;" onclick="deleteAttendanceDate(' + index + ', \'' + date + '\', \'current\')">×</span>' +
             '</div>';
         });
         
@@ -389,7 +389,7 @@ function showHistoryModal(memberIndex) {
     
     // 전체 삭제 버튼 추가
     historyHTML += '<div style="text-align: right; margin-bottom: 20px;">' +
-        '<button onclick="showDeleteAllHistoryModal(' + memberIndex + ')" style="padding: 8px 16px; background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3); transition: all 0.3s;">' +
+        '<button onclick="deleteAllAttendanceHistory(' + memberIndex + '); closeHistoryModal();" style="padding: 8px 16px; background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3); transition: all 0.3s;">' +
             '🗑️ 전체 기록 삭제' +
         '</button>' +
     '</div>';
@@ -411,7 +411,7 @@ function showHistoryModal(memberIndex) {
             const formattedDate = formatDate(date);
             historyHTML += '<div style="display: inline-flex; align-items: center; background: #f1f8e9; border-radius: 6px; padding:1px;">' +
                 '<span style="color: #558b2f; font-size: 12px;">' + formattedDate + '</span>' +
-                '<span style="color: #f44336; cursor: pointer; font-size: 14px; font-weight: bold; margin-left: 5px;" onclick="showDeleteAttendanceDateModal(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 14px; font-weight: bold; margin-left: 5px;" onclick="deleteAttendanceDate(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
             '</div>';
         });
         
@@ -440,31 +440,18 @@ function showHistoryModal(memberIndex) {
 
 // ==================== 레슨 기록 삭제 함수들 ====================
 
-// 개별 레슨 기록 삭제 확인 모달
-function showDeleteAttendanceDateModal(memberIndex, date, type) {
+// 개별 레슨 기록 삭제
+function deleteAttendanceDate(memberIndex, date, type) {
     if (!hasEditPermission()) {
         showAlert('삭제 권한이 없습니다. 로그인해주세요!');
         openLoginModal();
         return;
     }
     
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.id = 'deleteAttendanceDateModal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <p>${formatDate(date)} 레슨 기록을 삭제하시겠습니까?</p>
-            <div class="modal-buttons">
-                <button style="background: #f44336;" onclick="confirmDeleteAttendanceDate(${memberIndex}, '${date}', '${type}')">삭제</button>
-                <button style="background: #9E9E9E;" onclick="closeDeleteAttendanceDateModal()">취소</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// 개별 레슨 기록 삭제 실행
-function confirmDeleteAttendanceDate(memberIndex, date, type) {
+    if (!confirm(date + ' 레슨 기록을 삭제하시겠습니까?')) {
+        return;
+    }
+    
     const member = members[memberIndex];
     
     if (type === 'current') {
@@ -488,7 +475,6 @@ function confirmDeleteAttendanceDate(memberIndex, date, type) {
     }
     
     saveToFirebase();
-    closeDeleteAttendanceDateModal();
     
     // 현재 열려있는 모달 닫고 새로고침
     closeMemberDetails();
@@ -501,44 +487,22 @@ function confirmDeleteAttendanceDate(memberIndex, date, type) {
     }, 300);
 }
 
-// 개별 레슨 기록 삭제 모달 닫기
-function closeDeleteAttendanceDateModal() {
-    const modal = document.getElementById('deleteAttendanceDateModal');
-    if (modal) {
-        modal.remove();
-    }
-}
-
-// 모든 완료된 레슨 기록 삭제 확인 모달
-function showDeleteAllHistoryModal(memberIndex) {
+// 모든 완료된 레슨 기록 삭제
+function deleteAllAttendanceHistory(memberIndex) {
     if (!hasEditPermission()) {
         showAlert('삭제 권한이 없습니다. 로그인해주세요!');
         openLoginModal();
         return;
     }
     
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.id = 'deleteAllHistoryModal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <p>모든 완료된 레슨 기록을 삭제하시겠습니까?<br><small style="color: #999;">이 작업은 되돌릴 수 없습니다.</small></p>
-            <div class="modal-buttons">
-                <button style="background: #f44336;" onclick="confirmDeleteAllHistory(${memberIndex})">삭제</button>
-                <button style="background: #9E9E9E;" onclick="closeDeleteAllHistoryModal()">취소</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// 모든 완료된 레슨 기록 삭제 실행
-function confirmDeleteAllHistory(memberIndex) {
+    if (!confirm('모든 완료된 레슨 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+    
     const member = members[memberIndex];
     member.attendanceHistory = [];
     
     saveToFirebase();
-    closeDeleteAllHistoryModal();
     
     // 현재 열려있는 모달 닫고 새로고침
     closeMemberDetails();
@@ -548,14 +512,6 @@ function confirmDeleteAllHistory(memberIndex) {
         showMemberDetails(memberIndex);
         showAlert('모든 완료된 레슨 기록이 삭제되었습니다.');
     }, 300);
-}
-
-// 모든 완료된 레슨 기록 삭제 모달 닫기
-function closeDeleteAllHistoryModal() {
-    const modal = document.getElementById('deleteAllHistoryModal');
-    if (modal) {
-        modal.remove();
-    }
 }
 
 function closeHistoryModal() {
