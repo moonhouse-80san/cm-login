@@ -441,14 +441,31 @@ function toggleAttendance(memberIndex) {
             showAlert(member.name + ' 레슨 체크 완료!');
         }
     } else {
-        member.attendanceDates.splice(dateIndex, 1);
-        member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
-        const targetCount = member.targetCount || 0;
-        if (targetCount > 0) {
-            showAlert(member.name + ' 레슨이 취소되었습니다. (' + member.currentCount + '/' + targetCount + '회)');
-        } else {
-            showAlert(member.name + ' 레슨이 취소되었습니다.');
-        }
+        // ⭐ 수정 부분: confirm() 대신 showConfirm() 사용
+        showConfirm(
+            selectedDate + ' 레슨 기록을 삭제하시겠습니까?',
+            function() {
+                member.attendanceDates.splice(dateIndex, 1);
+                member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
+                const targetCount = member.targetCount || 0;
+                if (targetCount > 0) {
+                    showAlert(member.name + ' 레슨이 취소되었습니다. (' + member.currentCount + '/' + targetCount + '회)');
+                } else {
+                    showAlert(member.name + ' 레슨이 취소되었습니다.');
+                }
+                
+                saveToFirebase();
+                renderMembers();
+
+                const calendar = document.getElementById('formCalendar');
+                if (calendar.style.display !== 'none') {
+                    renderFormCalendar();
+                }
+
+                closeAttendanceSelectModal();
+            }
+        );
+        return; // confirm 대기를 위해 여기서 return
     }
 
     saveToFirebase();
