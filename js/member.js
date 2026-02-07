@@ -410,8 +410,8 @@ function showHistoryModal(memberIndex) {
         dates.forEach(date => {
             const formattedDate = formatDate(date);
             historyHTML += '<div style="display: inline-flex; align-items: center; background: #f1f8e9; border-radius: 6px; padding:1px;">' +
-                '<span style="color: #558b2f; font-size: 13px;">' + formattedDate + '</span>' +
-                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 5px;" onclick="deleteAttendanceDate(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
+                '<span style="color: #558b2f; font-size: 12px;">' + formattedDate + '</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 14px; font-weight: bold; margin-left: 5px;" onclick="deleteAttendanceDate(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
             '</div>';
         });
         
