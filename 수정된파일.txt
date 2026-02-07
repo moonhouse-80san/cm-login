@@ -65,3 +65,21 @@
 	form.js
 	settings.js
 	index.html
+
+3. 2월 7일 수정사항
+	[사항1]
+	- 달력 열기가 안 됨
+	calendar.js
+	
+	[사항1]
+	- 레슨 기록 X 해서 기록을 지움(클 + 딥)
+	member.js
+	member.css
+	modal.js
+	
+	[사항2]
+	- 레슨관리 관리자만
+	index.html
+	login.js
+	calendar.js
+	login.css
