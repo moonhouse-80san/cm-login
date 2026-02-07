@@ -383,7 +383,7 @@ function showHistoryModal(memberIndex) {
         '<div class="member-details-content" style="max-height: 70vh; overflow-y: auto;">';
     
     historyHTML += '<div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 5px; border-radius: 12px; margin-bottom: 10px; text-align: center;">' +
-        '<div style="font-size: 14px; font-weight: 700; margin-bottom: 5px;">총 ' + historyDates.length + '회</div>' +
+        '<div style="font-size: 14px; font-weight: 700; margin-bottom: 1px;">총 ' + historyDates.length + '회</div>' +
         '<div style="font-size: 14px; opacity: 0.9;">레슨을 완료했습니다!</div>' +
     '</div>';
     
