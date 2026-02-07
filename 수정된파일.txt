@@ -78,12 +78,14 @@
 	modal.js
 	
 	[사항2]
-	- 레슨관리 관리자만
+	- 레슨관리 관리자만(딥)
 	index.html
 	login.js
 	calendar.js
 	login.css
 	
 	[사항3]
-	- 회원목록 부수 제거
+	- 회원목록 부수 제거(딥) / css 수정
 	member.js
+
+	

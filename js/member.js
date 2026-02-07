@@ -286,9 +286,9 @@ function showMemberDetails(index) {
         const sortedCurrentDates = currentDates.slice().sort((a, b) => b.localeCompare(a));
         sortedCurrentDates.forEach(date => {
             const formattedDate = formatDate(date);
-            detailsHTML += '<div style="display: inline-flex; align-items: center; background: #e3f2fd; border-radius: 6px; padding: 4px 8px;">' +
-                '<span style="color: #1976d2; font-size: 13px;">' + formattedDate + '</span>' +
-                '<span style="color: #f44336; cursor: pointer; font-size: 18px; font-weight: bold; margin-left: 8px;" onclick="deleteAttendanceDate(' + index + ', \'' + date + '\', \'current\')">×</span>' +
+            detailsHTML += '<div style="display: inline-flex; align-items: center; background: #e3f2fd; border-radius: 6px; padding: 4px 10px; margin-left: 10px;">' +
+                '<span style="color: #1976d2; font-size: 14px;">' + formattedDate + '</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 8px;" onclick="deleteAttendanceDate(' + index + ', \'' + date + '\', \'current\')">×</span>' +
             '</div>';
         });
         
@@ -298,10 +298,10 @@ function showMemberDetails(index) {
     // 완료된 레슨 기록
     if (historyDates.length > 0) {
         detailsHTML += '<div class="member-details-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom:10px; border-bottom:1px solid #e0e0e0;">' +
-            '<h3 style="margin: 0; border: none;">✅ 완료된 레슨 기록 (' + historyDates.length + '회)</h3>' +
+            '<h4 style="margin: 0; border: none;">✅ 완료된 레슨 기록 (' + historyDates.length + '회)</h4>' +
             '<div>' +
                 '<button onclick="showHistoryModal(' + index + ')" style="padding: 6px 12px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s;">' +
-                    '📋 전체 기록 보기' +
+                    '보기' +
                 '</button>' +
             '</div>' +
         '</div>';
@@ -379,14 +379,13 @@ function showHistoryModal(memberIndex) {
     
     let historyHTML = '<div class="member-details-modal" style="max-width: 600px;">' +
         '<div class="member-details-header">' +
-            '<h2>✅ ' + member.name + ' - 완료된 레슨 기록</h2>' +
+            '<h4>✅ ' + member.name + ' - 완료된 레슨 기록</h4>' +
             '<button class="close-btn" onclick="closeHistoryModal()">×</button>' +
         '</div>' +
         '<div class="member-details-content" style="max-height: 70vh; overflow-y: auto;">';
     
-    historyHTML += '<div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center;">' +
-        '<div style="font-size: 48px; margin-bottom: 10px;">🏆</div>' +
-        '<div style="font-size: 24px; font-weight: 700; margin-bottom: 5px;">총 ' + historyDates.length + '회</div>' +
+    historyHTML += '<div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 5px; border-radius: 12px; margin-bottom: 10px; text-align: center;">' +
+        '<div style="font-size: 14px; font-weight: 700; margin-bottom: 5px;">총 ' + historyDates.length + '회</div>' +
         '<div style="font-size: 14px; opacity: 0.9;">레슨을 완료했습니다!</div>' +
     '</div>';
     
@@ -412,9 +411,9 @@ function showHistoryModal(memberIndex) {
         
         dates.forEach(date => {
             const formattedDate = formatDate(date);
-            historyHTML += '<div style="display: inline-flex; align-items: center; background: #f1f8e9; border-radius: 6px; padding: 6px 10px;">' +
+            historyHTML += '<div style="display: inline-flex; align-items: center; background: #f1f8e9; border-radius: 6px; padding:1px;">' +
                 '<span style="color: #558b2f; font-size: 13px;">' + formattedDate + '</span>' +
-                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 8px;" onclick="deleteAttendanceDate(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 5px;" onclick="deleteAttendanceDate(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
             '</div>';
         });
         
