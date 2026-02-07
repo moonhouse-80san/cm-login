@@ -1,6 +1,7 @@
+// member.js
 // 전역 변수
-let currentSort = 'name';
-let sortAscending = true;
+let currentSort = 'registerDate'; // 기본 정렬을 등록일순으로 변경
+let sortAscending = false; // 기본 정렬 방식을 내림차순(최신순)으로 변경
 
 // 검색 함수
 function searchMembers() {
@@ -33,7 +34,8 @@ function sortMembers(sortBy, fromSearch) {
         if (currentSort === sortBy) {
             sortAscending = !sortAscending;
         } else {
-            sortAscending = true;
+            // 등록일순은 기본적으로 내림차순(최신순), 이름순은 기본적으로 오름차순
+            sortAscending = (sortBy === 'name') ? true : false;
         }
         currentSort = sortBy;
 
@@ -46,7 +48,12 @@ function sortMembers(sortBy, fromSearch) {
         if (activeBtn) {
             activeBtn.classList.add('active');
             if (sortBy !== 'coach') {
-                activeBtn.textContent += sortAscending ? ' ▲' : ' ▼';
+                // 등록일순일 때는 기본이 내림차순(최신순) 표시
+                if (sortBy === 'registerDate') {
+                    activeBtn.textContent += sortAscending ? ' ▲' : ' ▼';
+                } else {
+                    activeBtn.textContent += sortAscending ? ' ▲' : ' ▼';
+                }
             }
         }
     }
@@ -61,17 +68,21 @@ function sortMembers(sortBy, fromSearch) {
     switch(sortBy) {
         case 'name':
             sortTarget.sort((a, b) => {
-                const cmp = a.name.localeCompare(b.name);
+                const nameA = a.name || '';
+                const nameB = b.name || '';
+                const cmp = nameA.localeCompare(nameB, 'ko');
                 return sortAscending ? cmp : -cmp;
             });
             break;
         case 'registerDate':
             sortTarget.sort((a, b) => {
                 if (!a.registerDate && !b.registerDate) return 0;
-                if (!a.registerDate) return 1;
-                if (!b.registerDate) return -1;
-                const cmp = new Date(a.registerDate) - new Date(b.registerDate);
-                return sortAscending ? cmp : -cmp;
+                if (!a.registerDate) return 1; // 등록일 없는 항목을 뒤로
+                if (!b.registerDate) return -1; // 등록일 없는 항목을 뒤로
+                const dateA = new Date(a.registerDate);
+                const dateB = new Date(b.registerDate);
+                // sortAscending이 true면 오름차순(오래된순), false면 내림차순(최신순)
+                return sortAscending ? dateA - dateB : dateB - dateA;
             });
             break;
     }
@@ -158,6 +169,138 @@ function renderMembers() {
             '</div>' +
         '</div>';
     }).join('');
+}
+
+// 코치별 회원 목록 렌더링
+function renderMembersByCoach() {
+    const listEl = document.getElementById('listSection');
+    const countEl = document.getElementById('memberCount');
+
+    countEl.textContent = members.length + '명';
+
+    if (filteredMembers.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">' +
+            '<svg fill="currentColor" viewBox="0 0 20 20">' +
+                '<path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>' +
+            '</svg>' +
+            '<p>' + (document.getElementById('searchInput').value ? '검색 결과가 없습니다' : '등록된 회원이 없습니다') + '</p>' +
+        '</div>';
+        return;
+    }
+
+    // 코치별로 회원 분류
+    const membersByCoach = {};
+    const noCoachMembers = [];
+    
+    filteredMembers.forEach(member => {
+        const coach = member.coach || '코치 미지정';
+        if (!membersByCoach[coach]) {
+            membersByCoach[coach] = [];
+        }
+        membersByCoach[coach].push(member);
+    });
+
+    // 코치별로 회원을 등록일 최신순으로 정렬
+    Object.keys(membersByCoach).forEach(coach => {
+        membersByCoach[coach].sort((a, b) => {
+            if (!a.registerDate && !b.registerDate) return 0;
+            if (!a.registerDate) return 1;
+            if (!b.registerDate) return -1;
+            return new Date(b.registerDate) - new Date(a.registerDate); // 최신순
+        });
+    });
+
+    // 코치명으로 정렬 (코치 미지정은 마지막에)
+    const sortedCoaches = Object.keys(membersByCoach).sort((a, b) => {
+        if (a === '코치 미지정') return 1;
+        if (b === '코치 미지정') return -1;
+        return a.localeCompare(b);
+    });
+
+    let html = '';
+    
+    sortedCoaches.forEach(coach => {
+        const coachMembers = membersByCoach[coach];
+        const coachLabel = coach === '코치 미지정' ? '코치 미지정' : '🏋️ ' + coach;
+        
+        html += '<div class="coach-section">' +
+            '<div class="coach-header" onclick="toggleCoachSection(\'' + coach + '\')">' +
+                '<div class="coach-title">' +
+                    '<span class="coach-toggle-icon">▼</span>' +
+                    '<span class="coach-name">' + coachLabel + '</span>' +
+                    '<span class="coach-count">' + coachMembers.length + '명</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="coach-members" id="coach-' + coach + '">';
+
+        coachMembers.forEach((member, index) => {
+            const originalIndex = members.indexOf(member);
+            const phoneLink = member.phone ? 
+                '<div><a href="tel:' + String(member.phone).replace(/-/g, '') + '" class="phone-link">📞 ' + member.phone + '</a></div>' : '';
+
+            let scheduleBadges = '';
+            if (member.schedules && member.schedules.length > 0) {
+                member.schedules.forEach(schedule => {
+                    if (schedule.day && schedule.startTime && schedule.endTime) {
+                        scheduleBadges += '<span class="schedule-badge">' + dayNames[schedule.day] + ' ' + schedule.startTime + '~' + schedule.endTime + '</span>';
+                    }
+                });
+            }
+
+            const currentCount = member.currentCount || 0;
+            const targetCount = member.targetCount || 0;
+
+            let attendanceCount = '';
+            if (targetCount > 0) {
+                attendanceCount = '<span class="attendance-count" style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #fff; color: #ff6600; border-radius: 2px; font-size: 14px; font-weight: 500; margin-left: 5px; white-space: nowrap;">📊 ' + currentCount + '/' + targetCount + '회</span>';
+            }
+
+            const hasPermission = hasEditPermission();
+            const editBtnClass = hasPermission ? 'btn-edit' : 'btn-edit btn-edit-disabled btn-hidden';
+            const deleteBtnClass = hasPermission ? 'btn-delete' : 'btn-delete btn-delete-disabled btn-hidden';
+
+            html += '<div class="member-card">' +
+                '<div class="member-content">' +
+                    '<div class="member-header">' +
+                        '<div class="member-name" style="cursor: pointer; color: #000; text-decoration: none;" onclick="showMemberDetails(' + originalIndex + ')">' +
+                            '<span class="mcardn">' + member.name + '</span>' +
+                            attendanceCount +
+                        '</div>' +
+                        '<div class="member-actions">' +
+                            '<button class="' + editBtnClass + '" data-index="' + originalIndex + '" onclick="editMember(' + originalIndex + ');">수정</button>' +
+                            '<button class="' + deleteBtnClass + '" data-index="' + originalIndex + '" onclick="checkPermissionBeforeDelete(' + originalIndex + ');">삭제</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="member-info">' +
+                        '<div class="phone-fee-row">' +
+                            phoneLink +
+                            (member.fee !== null && member.fee !== undefined ? '<span class="member-fee">💰 월회비:' + formatNumber(member.fee) + '원</span>' : '') +
+                        '</div>' +
+                        '<div class="member-meta-row">' +
+                            (scheduleBadges ? '<div class="schedule-container">' + scheduleBadges + '</div>' : '') +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        });
+
+        html += '</div></div>';
+    });
+
+    listEl.innerHTML = html;
+}
+
+function toggleCoachSection(coach) {
+    const section = document.getElementById('coach-' + coach);
+    if (section) {
+        const isHidden = section.style.display === 'none';
+        section.style.display = isHidden ? 'block' : 'none';
+        
+        const coachHeader = document.querySelector('#coach-' + coach).parentElement.querySelector('.coach-toggle-icon');
+        if (coachHeader) {
+            coachHeader.textContent = isHidden ? '▼' : '▶';
+        }
+    }
 }
 
 // 회원 상세 정보 팝업
@@ -718,3 +861,23 @@ function switchTab(tabName) {
         renderSchedule();
     }
 }
+
+// 앱 초기화 시 등록일 최신순(내림차순)으로 자동 정렬
+document.addEventListener('DOMContentLoaded', function() {
+    // 페이지 로드 시 등록일 최신순 정렬 버튼 활성화
+    setTimeout(() => {
+        const registerDateBtn = document.querySelector('.filter-btn[data-sort="registerDate"]');
+        if (registerDateBtn) {
+            registerDateBtn.classList.add('active');
+            registerDateBtn.textContent = '등록일순 ▼'; // ▼ 표시 = 내림차순(최신순)
+        }
+        
+        // 회원 데이터가 있으면 등록일 최신순으로 정렬 적용
+        setTimeout(() => {
+            if (members.length > 0) {
+                filteredMembers = [...members];
+                sortMembers('registerDate', true);
+            }
+        }, 800);
+    }, 300);
+});
