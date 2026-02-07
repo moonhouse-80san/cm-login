@@ -116,11 +116,24 @@ function updateUIByRole() {
     const logoutIcon = document.getElementById('logoutIcon');
     const syncStatus = document.getElementById('syncStatus');
     
-    // 레슨 관리 섹션 표시/숨김
+    // 레슨 관리 섹션 표시/숨김 - 비로그인 사용자는 완전히 숨김
     const lessonManagementSection = document.getElementById('lessonManagementSection');
     if (lessonManagementSection) {
-        // 관리자 또는 부관리자일 때만 표시
-        lessonManagementSection.style.display = (role === USER_ROLES.ADMIN || role === USER_ROLES.SUB_ADMIN) ? 'block' : 'none';
+        // 관리자 또는 부관리자일 때만 표시, 비로그인은 완전히 숨김
+        if (role === USER_ROLES.ADMIN || role === USER_ROLES.SUB_ADMIN) {
+            lessonManagementSection.style.display = 'block';
+        } else {
+            lessonManagementSection.style.display = 'none';
+            // 달력이 열려있다면 닫기
+            const calendar = document.getElementById('formCalendar');
+            if (calendar) {
+                calendar.style.display = 'none';
+            }
+            const toggleText = document.getElementById('calendarToggleText');
+            if (toggleText) {
+                toggleText.textContent = '달력 열기';
+            }
+        }
     }
     
     // 동기화 버튼 표시/숨김 (로그인 시에만 표시)

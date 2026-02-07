@@ -87,5 +87,7 @@
 	[사항3]
 	- 회원목록 부수 제거(딥) / css 수정
 	member.js
+	- SMS 수정
+	camera.js
 
 	

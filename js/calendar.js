@@ -6,7 +6,7 @@ let selectedDate = null;
 function toggleCalendar() {
     // 권한 확인 - 관리자/부관리자만 접근 가능
     if (!hasEditPermission()) {
-        showAlert('레슨 관리 기능은 관리자 권한이 필요합니다.');
+        showAlert('레슨 관리 기능은 로그인이 필요합니다.');
         openLoginModal();
         return;
     }
@@ -107,7 +107,7 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
 	let message =
-		memberName + '회원님 레슨 완료'' +
+		memberName + '회원님 레슨 완료' +
 		'회비 납부 부탁드립니다.';
 
 	if (bank && accountNumber) {
@@ -291,6 +291,13 @@ function nextMonthForm() {
 }
 
 function selectDate(year, month, date) {
+    // 권한 확인 - 날짜 선택 시점에 체크
+    if (!hasEditPermission()) {
+        showAlert('레슨 체크는 관리자 권한이 필요합니다.');
+        openLoginModal();
+        return;
+    }
+    
     const hasMembersWithTarget = members.some(member => {
         const targetCount = member.targetCount || 0;
         return targetCount > 0;
