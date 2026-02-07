@@ -728,3 +728,7 @@ select:focus {
     border-color: #F57C00;
     box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
 }
+
+#alertModal.modal {
+    z-index: 10005 !important;
+}

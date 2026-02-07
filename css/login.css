@@ -111,6 +111,39 @@
     border-color: #2196F3;
 }
 
+/* 레슨 관리 섹션 숨김/표시 전환 애니메이션 */
+#lessonManagementSection {
+    transition: all 0.3s ease;
+}
+
+/* 권한 없는 상태에서의 툴팁 스타일 */
+.no-permission-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.no-permission-tooltip::after {
+    content: "🔒 관리자 전용";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.no-permission-tooltip:hover::after {
+    opacity: 1;
+}
+
 /* 반응형 */
 @media (max-width: 600px) {
     .login-section {

@@ -116,6 +116,13 @@ function updateUIByRole() {
     const logoutIcon = document.getElementById('logoutIcon');
     const syncStatus = document.getElementById('syncStatus');
     
+    // 레슨 관리 섹션 표시/숨김
+    const lessonManagementSection = document.getElementById('lessonManagementSection');
+    if (lessonManagementSection) {
+        // 관리자 또는 부관리자일 때만 표시
+        lessonManagementSection.style.display = (role === USER_ROLES.ADMIN || role === USER_ROLES.SUB_ADMIN) ? 'block' : 'none';
+    }
+    
     // 동기화 버튼 표시/숨김 (로그인 시에만 표시)
     if (syncStatus) {
         syncStatus.style.display = role === USER_ROLES.GUEST ? 'none' : 'block';
@@ -204,6 +211,11 @@ function hasEditPermission() {
 
 function hasSettingsPermission() {
     return currentUser.role === USER_ROLES.ADMIN;
+}
+
+function hasLessonManagementPermission() {
+    // 관리자 또는 부관리자만 레슨 관리 가능
+    return currentUser.role === USER_ROLES.ADMIN || currentUser.role === USER_ROLES.SUB_ADMIN;
 }
 
 // 수정 전 권한 확인

@@ -1,3 +1,4 @@
+// modal.js
 // 현재 수정 중인 회원의 레슨 초기화
 function resetCurrentAttendance() {
     if (!hasEditPermission()) {

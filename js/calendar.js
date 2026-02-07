@@ -4,6 +4,13 @@ let selectedDate = null;
 
 // 달력 토글 함수
 function toggleCalendar() {
+    // 권한 확인 - 관리자/부관리자만 접근 가능
+    if (!hasEditPermission()) {
+        showAlert('레슨 관리 기능은 관리자 권한이 필요합니다.');
+        openLoginModal();
+        return;
+    }
+    
     if (members.length === 0) {
         showAlert('등록된 회원이 없습니다.');
         return;

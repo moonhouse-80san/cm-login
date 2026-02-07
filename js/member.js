@@ -124,6 +124,21 @@ function renderMembers() {
             attendanceCount = '<span class="attendance-count" style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #fff; color: #ff6600; border-radius: 2px; font-size: 14px; font-weight: 500; margin-left: 5px; white-space: nowrap;">📊 ' + currentCount + '/' + targetCount + '회</span>';
         }
 
+        // 부수 정보 추가
+        let skillBadge = '';
+        if (member.skillLevel !== undefined && member.skillLevel !== null) {
+            const skillLevel = parseInt(member.skillLevel);
+            if (skillLevel === -2) {
+                skillBadge = '<span style="background: #FFD700; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">선수출신</span>';
+            } else if (skillLevel === 0) {
+                skillBadge = '<span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">0부</span>';
+            } else if (skillLevel > 0) {
+                skillBadge = '<span style="background: #2196F3; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">' + skillLevel + '부</span>';
+            } else if (skillLevel === -1) {
+                skillBadge = '<span style="background: #9C27B0; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">희망</span>';
+            }
+        }
+
         let coachBadge = '';
         if (member.coach) {
             coachBadge = '<span class="coach-badge">🏋️ ' + member.coach + '</span>';
@@ -139,6 +154,7 @@ function renderMembers() {
                     '<div class="member-name" style="cursor: pointer; color: #000; text-decoration: none;" onclick="showMemberDetails(' + originalIndex + ')">' +
                         '<span class="mcardn">' + member.name + '</span>' +
                         attendanceCount +
+                        skillBadge +
                     '</div>' +
                     '<div class="member-actions">' +
                         '<button class="' + editBtnClass + '" data-index="' + originalIndex + '" onclick="editMember(' + originalIndex + ');">수정</button>' +
@@ -207,20 +223,15 @@ function showMemberDetails(index) {
         detailsHTML += '<tr><td>🎂 생년:</td><td>' + member.birthYear + '년생</td></tr>';
     }
     
-	// member.js 파일에서 부수 표시 부분 수정
-	if (member.skillLevel !== undefined && member.skillLevel !== null) {
-		let skillText = '';
-		if (member.skillLevel === -2) {
-			skillText = '선수출신';
-		} else if (member.skillLevel === -1) {
-			skillText = '희망';
-		} else if (member.skillLevel === 0) {
-			skillText = '0부'; 
-		} else {
-			skillText = member.skillLevel + '부';
-		}
-		detailsHTML += '<tr><td>🏓 부수:</td><td>' + skillText + '</td></tr>';
-	}
+    if (member.skillLevel !== undefined && member.skillLevel !== null) {
+        const skillLevel = parseInt(member.skillLevel);
+        let skillText = '';
+        if (skillLevel === -2) skillText = '선수출신';
+        else if (skillLevel === -1) skillText = '희망';
+        else if (skillLevel === 0) skillText = '0부';
+        else skillText = skillLevel + '부';
+        detailsHTML += '<tr><td>🏓 부수:</td><td>' + skillText + '</td></tr>';
+    }
     
     const targetCount = member.targetCount || 0;
     const currentCount = member.currentCount || 0;
@@ -280,28 +291,35 @@ function showMemberDetails(index) {
     const currentDates = member.attendanceDates || [];
     const historyDates = member.attendanceHistory || [];
     
+    // 현재 진행 중인 레슨 기록
     if (currentDates.length > 0) {
         detailsHTML += '<div class="member-details-section">' +
             '<h3>📚 현재 진행 중인 레슨 (' + currentDates.length + '회)</h3>' +
-            '<div class="attendance-dates">';
+            '<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">';
         
         const sortedCurrentDates = currentDates.slice().sort((a, b) => b.localeCompare(a));
         sortedCurrentDates.forEach(date => {
             const formattedDate = formatDate(date);
-            detailsHTML += '<span class="attendance-date-badge" style="background: #e3f2fd; color: #1976d2;">' + formattedDate + '</span>';
+            detailsHTML += '<div style="display: inline-flex; align-items: center; background: #e3f2fd; border-radius: 6px; padding: 4px 8px;">' +
+                '<span style="color: #1976d2; font-size: 13px;">' + formattedDate + '</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 18px; font-weight: bold; margin-left: 8px;" onclick="deleteAttendanceDate(' + index + ', \'' + date + '\', \'current\')">×</span>' +
+            '</div>';
         });
         
         detailsHTML += '</div></div>';
     }
     
-if (historyDates.length > 0) {
-    detailsHTML += '<div class="member-details-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom:10px; border-bottom:1px solid #e0e0e0;">' +
-        '<h3 style="margin: 0; border: none;">✅ 완료된 레슨 기록 (' + historyDates.length + '회)</h3>' +
-        '<button onclick="showHistoryModal(' + index + ')" style="padding: 6px 12px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s;">' +
-            '📋 전체 기록 보기' +
-        '</button>' +
-    '</div>';
-}
+    // 완료된 레슨 기록
+    if (historyDates.length > 0) {
+        detailsHTML += '<div class="member-details-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom:10px; border-bottom:1px solid #e0e0e0;">' +
+            '<h3 style="margin: 0; border: none;">✅ 완료된 레슨 기록 (' + historyDates.length + '회)</h3>' +
+            '<div>' +
+                '<button onclick="showHistoryModal(' + index + ')" style="padding: 6px 12px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); transition: all 0.3s;">' +
+                    '📋 전체 기록 보기' +
+                '</button>' +
+            '</div>' +
+        '</div>';
+    }
     
     if (currentDates.length === 0 && historyDates.length === 0) {
         detailsHTML += '<div class="member-details-section">' +
@@ -386,6 +404,13 @@ function showHistoryModal(memberIndex) {
         '<div style="font-size: 14px; opacity: 0.9;">레슨을 완료했습니다!</div>' +
     '</div>';
     
+    // 전체 삭제 버튼 추가
+    historyHTML += '<div style="text-align: right; margin-bottom: 20px;">' +
+        '<button onclick="deleteAllAttendanceHistory(' + memberIndex + '); closeHistoryModal();" style="padding: 8px 16px; background: linear-gradient(135deg, #f44336, #d32f2f); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3); transition: all 0.3s;">' +
+            '🗑️ 전체 기록 삭제' +
+        '</button>' +
+    '</div>';
+    
     const sortedMonths = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
     
     sortedMonths.forEach(monthKey => {
@@ -397,13 +422,14 @@ function showHistoryModal(memberIndex) {
             '<div style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #4CAF50;">' +
                 '📅 ' + year + '년 ' + month + '월 (' + dates.length + '회)' +
             '</div>' +
-            '<div class="attendance-dates" style="display: flex; flex-wrap: wrap; gap: 8px;">';
+            '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
         
         dates.forEach(date => {
             const formattedDate = formatDate(date);
-            historyHTML += '<span class="attendance-date-badge" style="background: #f1f8e9; color: #558b2f; padding: 6px 12px; border-radius: 6px; font-size: 13px;">' + 
-                formattedDate + 
-            '</span>';
+            historyHTML += '<div style="display: inline-flex; align-items: center; background: #f1f8e9; border-radius: 6px; padding: 6px 10px;">' +
+                '<span style="color: #558b2f; font-size: 13px;">' + formattedDate + '</span>' +
+                '<span style="color: #f44336; cursor: pointer; font-size: 20px; font-weight: bold; margin-left: 8px;" onclick="deleteAttendanceDate(' + memberIndex + ', \'' + date + '\', \'history\')">×</span>' +
+            '</div>';
         });
         
         historyHTML += '</div></div>';
@@ -427,6 +453,82 @@ function showHistoryModal(memberIndex) {
             closeHistoryModal();
         }
     });
+}
+
+// ==================== 레슨 기록 삭제 함수들 ====================
+
+// 개별 레슨 기록 삭제
+function deleteAttendanceDate(memberIndex, date, type) {
+    if (!hasEditPermission()) {
+        showAlert('삭제 권한이 없습니다. 로그인해주세요!');
+        openLoginModal();
+        return;
+    }
+    
+    if (!confirm(date + ' 레슨 기록을 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    const member = members[memberIndex];
+    
+    if (type === 'current') {
+        // 현재 진행 중인 레슨에서 삭제
+        if (member.attendanceDates) {
+            const index = member.attendanceDates.indexOf(date);
+            if (index !== -1) {
+                member.attendanceDates.splice(index, 1);
+                // 현재 레슨 횟수 감소
+                member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
+            }
+        }
+    } else if (type === 'history') {
+        // 완료된 레슨 기록에서 삭제
+        if (member.attendanceHistory) {
+            const index = member.attendanceHistory.indexOf(date);
+            if (index !== -1) {
+                member.attendanceHistory.splice(index, 1);
+            }
+        }
+    }
+    
+    saveToFirebase();
+    
+    // 현재 열려있는 모달 닫고 새로고침
+    closeMemberDetails();
+    closeHistoryModal();
+    
+    // 약간의 딜레이 후 상세정보 다시 열기
+    setTimeout(() => {
+        showMemberDetails(memberIndex);
+        showAlert('레슨 기록이 삭제되었습니다.');
+    }, 300);
+}
+
+// 모든 완료된 레슨 기록 삭제
+function deleteAllAttendanceHistory(memberIndex) {
+    if (!hasEditPermission()) {
+        showAlert('삭제 권한이 없습니다. 로그인해주세요!');
+        openLoginModal();
+        return;
+    }
+    
+    if (!confirm('모든 완료된 레슨 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+    
+    const member = members[memberIndex];
+    member.attendanceHistory = [];
+    
+    saveToFirebase();
+    
+    // 현재 열려있는 모달 닫고 새로고침
+    closeMemberDetails();
+    
+    // 약간의 딜레이 후 상세정보 다시 열기
+    setTimeout(() => {
+        showMemberDetails(memberIndex);
+        showAlert('모든 완료된 레슨 기록이 삭제되었습니다.');
+    }, 300);
 }
 
 function closeHistoryModal() {
