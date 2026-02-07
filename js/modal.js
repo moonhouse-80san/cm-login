@@ -1,4 +1,3 @@
-// modal.js
 // 현재 수정 중인 회원의 레슨 초기화
 function resetCurrentAttendance() {
     if (!hasEditPermission()) {
@@ -84,4 +83,56 @@ function showAlert(message) {
 
 function closeAlertModal() {
     document.getElementById('alertModal').classList.remove('active');
+}
+
+// ==================== 커스텀 Confirm 모달 (수정됨) ====================
+// 브라우저 기본 confirm() 대신 사용하여 주소 표시 제거
+function showConfirm(message, onConfirm, onCancel) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'customConfirmModal';
+    modal.style.zIndex = '10010'; // 다른 모달보다 위에 표시
+    modal.innerHTML = `
+        <div class="modal-content">
+            <p style="white-space: pre-line; line-height: 1.6;">${message}</p>
+            <div class="modal-buttons">
+                <button style="background: #2196F3;" id="confirmYes">확인</button>
+                <button style="background: #9E9E9E;" id="confirmNo">취소</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // 확인 버튼 클릭
+    document.getElementById('confirmYes').onclick = function() {
+        modal.remove();
+        if (onConfirm) onConfirm();
+    };
+    
+    // 취소 버튼 클릭
+    document.getElementById('confirmNo').onclick = function() {
+        modal.remove();
+        if (onCancel) onCancel();
+    };
+    
+    // 배경 클릭 시 취소 (모달 닫기)
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+            if (onCancel) onCancel();
+        }
+    });
+    
+    // ESC 키로 모달 닫기
+    const escHandler = function(e) {
+        if (e.key === 'Escape') {
+            const customModal = document.getElementById('customConfirmModal');
+            if (customModal) {
+                customModal.remove();
+                if (onCancel) onCancel();
+                document.removeEventListener('keydown', escHandler);
+            }
+        }
+    };
+    document.addEventListener('keydown', escHandler);
 }

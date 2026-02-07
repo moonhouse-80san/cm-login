@@ -591,43 +591,45 @@ function deleteAttendanceDate(memberIndex, date, type) {
         return;
     }
     
-    if (!confirm(date + ' 레슨 기록을 삭제하시겠습니까?')) {
-        return;
-    }
-    
-    const member = members[memberIndex];
-    
-    if (type === 'current') {
-        // 현재 진행 중인 레슨에서 삭제
-        if (member.attendanceDates) {
-            const index = member.attendanceDates.indexOf(date);
-            if (index !== -1) {
-                member.attendanceDates.splice(index, 1);
-                // 현재 레슨 횟수 감소
-                member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
+    // confirm() 대신 showConfirm() 사용
+    showConfirm(
+        date + ' 레슨 기록을 삭제하시겠습니까?',
+        function() {
+            const member = members[memberIndex];
+            
+            if (type === 'current') {
+                // 현재 진행 중인 레슨에서 삭제
+                if (member.attendanceDates) {
+                    const index = member.attendanceDates.indexOf(date);
+                    if (index !== -1) {
+                        member.attendanceDates.splice(index, 1);
+                        // 현재 레슨 횟수 감소
+                        member.currentCount = Math.max(0, (member.currentCount || 0) - 1);
+                    }
+                }
+            } else if (type === 'history') {
+                // 완료된 레슨 기록에서 삭제
+                if (member.attendanceHistory) {
+                    const index = member.attendanceHistory.indexOf(date);
+                    if (index !== -1) {
+                        member.attendanceHistory.splice(index, 1);
+                    }
+                }
             }
+            
+            saveToFirebase();
+            
+            // 현재 열려있는 모달 닫고 새로고침
+            closeMemberDetails();
+            closeHistoryModal();
+            
+            // 약간의 딜레이 후 상세정보 다시 열기
+            setTimeout(() => {
+                showMemberDetails(memberIndex);
+                showAlert('레슨 기록이 삭제되었습니다.');
+            }, 300);
         }
-    } else if (type === 'history') {
-        // 완료된 레슨 기록에서 삭제
-        if (member.attendanceHistory) {
-            const index = member.attendanceHistory.indexOf(date);
-            if (index !== -1) {
-                member.attendanceHistory.splice(index, 1);
-            }
-        }
-    }
-    
-    saveToFirebase();
-    
-    // 현재 열려있는 모달 닫고 새로고침
-    closeMemberDetails();
-    closeHistoryModal();
-    
-    // 약간의 딜레이 후 상세정보 다시 열기
-    setTimeout(() => {
-        showMemberDetails(memberIndex);
-        showAlert('레슨 기록이 삭제되었습니다.');
-    }, 300);
+    );
 }
 
 // 모든 완료된 레슨 기록 삭제
@@ -638,23 +640,25 @@ function deleteAllAttendanceHistory(memberIndex) {
         return;
     }
     
-    if (!confirm('모든 완료된 레슨 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
-        return;
-    }
-    
-    const member = members[memberIndex];
-    member.attendanceHistory = [];
-    
-    saveToFirebase();
-    
-    // 현재 열려있는 모달 닫고 새로고침
-    closeMemberDetails();
-    
-    // 약간의 딜레이 후 상세정보 다시 열기
-    setTimeout(() => {
-        showMemberDetails(memberIndex);
-        showAlert('모든 완료된 레슨 기록이 삭제되었습니다.');
-    }, 300);
+    // confirm() 대신 showConfirm() 사용
+    showConfirm(
+        '모든 완료된 레슨 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.',
+        function() {
+            const member = members[memberIndex];
+            member.attendanceHistory = [];
+            
+            saveToFirebase();
+            
+            // 현재 열려있는 모달 닫고 새로고침
+            closeMemberDetails();
+            
+            // 약간의 딜레이 후 상세정보 다시 열기
+            setTimeout(() => {
+                showMemberDetails(memberIndex);
+                showAlert('모든 완료된 레슨 기록이 삭제되었습니다.');
+            }, 300);
+        }
+    );
 }
 
 function closeHistoryModal() {
