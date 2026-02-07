@@ -44,15 +44,13 @@ function sendWelcomeSMS(memberName, memberPhone) {
     const bank = settings.bankAccount?.bank || '';
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
-    // 수정된 부분: 'ㅊ' 제거
-    let message = memberName + '회원님 회원이 되신 것을 축하 드립니다.\n즐거운 탁구 생활이 되시기를 바랍니다.';
+    let message = memberName + '회원님 회원이 되신 것을 축하 드립니다. 즐거운 탁구 생활이 되시기를 바랍니다.';
     
     if (bank && accountNumber) {
-        message += '\n계좌번호 : ' + bank + ' ' + accountNumber;
+        message += ' 계좌번호 : ' + bank + ' ' + accountNumber;
     }
     
-    // 수정된 부분: 'ㅊ' 제거
-    message += '\n감사합니다.\n\n- ' + clubName;
+    message += ' 감사합니다. - ' + clubName;
     
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
@@ -98,15 +96,13 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     const bank = settings.bankAccount?.bank || '';
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
-    // 수정된 부분: 'ㅊ' 제거
-    let message = memberName + '회원님 레슨 횟수가 완료 되었습니다.\n다음 레슨 까지 회비 납부를 부탁드립니다.';
+    let message = memberName + '회원님 레슨 ' + targetCount + '회 완료되었습니다. 다음 회비 납부 부탁드립니다.';
     
     if (bank && accountNumber) {
-        message += '\n계좌번호 : ' + bank + ' ' + accountNumber;
+        message += ' 계좌번호 : ' + bank + ' ' + accountNumber;
     }
     
-    // 수정된 부분: 'ㅊ' 제거
-    message += '\n감사합니다.\n\n- ' + clubName;
+    message += ' 감사합니다. - ' + clubName;
     
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
