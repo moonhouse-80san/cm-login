@@ -89,5 +89,12 @@
 	member.js
 	- SMS 수정
 	camera.js
+	
+4. 2월 8일 수정사항
+	[사항1]
+	- 레슨 삭제 팝업창 주소 제거
+	member.js
+	modal.js
+	
 
 	
