@@ -728,3 +728,15 @@ select:focus {
     border-color: #F57C00;
     box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
 }
+
+/* 모달 z-index 계층 구조 */
+#alertModal.modal { z-index: 10010 !important; }        /* 가장 높음 - 권한 알림 */
+#loginModal.modal { z-index: 10009 !important; }        /* 로그인 모달 */
+#deleteModal.modal { z-index: 10008 !important; }       /* 삭제 확인 */
+#confirmModal.modal { z-index: 10008 !important; }      /* 초기화 확인 */
+#attendanceSelectModal.modal { z-index: 10007 !important; } /* 레슨 선택 */
+#historyModal.modal { z-index: 10006 !important; }      /* 기록 보기 */
+#memberDetailsModal.modal { z-index: 10005 !important; } /* 회원 상세 */
+#settingsModal.modal { z-index: 10004 !important; }     /* 설정 */
+#cameraModal.modal { z-index: 10004 !important; }       /* 카메라 */
+.attendance-alert-modal.modal { z-index: 10010 !important; } /* 레슨 알림 */
