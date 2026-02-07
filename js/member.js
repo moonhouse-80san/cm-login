@@ -1,4 +1,3 @@
-// member.js
 // 전역 변수
 let currentSort = 'registerDate'; // 기본 정렬을 등록일순으로 변경
 let sortAscending = false; // 기본 정렬 방식을 내림차순(최신순)으로 변경
@@ -741,19 +740,27 @@ function editMember(index) {
     isPhotoRemoved = false;
     currentEditIndex = index;
     
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    setTimeout(() => {
-        const nameInput = document.getElementById('name');
-        if (nameInput) {
-            nameInput.setAttribute('readonly', 'readonly');
-            nameInput.focus();
-            nameInput.select();
-            setTimeout(() => {
-                nameInput.removeAttribute('readonly');
-            }, 100);
-        }
-    }, 300);
+	setTimeout(() => {
+		const formSection = document.querySelector('.form-section');
+		if (formSection) {
+			window.scrollTo({
+				top: formSection.offsetTop,
+				behavior: 'smooth'
+			});
+		}
+		
+		setTimeout(() => {
+			const nameInput = document.getElementById('name');
+			if (nameInput) {
+				nameInput.setAttribute('readonly', 'readonly');
+				nameInput.focus();
+				nameInput.select();
+				setTimeout(() => {
+					nameInput.removeAttribute('readonly');
+				}, 100);
+			}
+		}, 500);
+	}, 200);
 }
 
 function renderSchedule() {
