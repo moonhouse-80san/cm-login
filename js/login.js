@@ -90,18 +90,47 @@ function saveLoginState(rememberMe) {
 
 // 로그아웃 함수
 function logout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-        currentUser = {
-            role: USER_ROLES.GUEST,
-            username: '',
-            id: ''
-        };
-        sessionStorage.removeItem('currentUser');
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('rememberLogin');
-        showAlert('로그아웃되었습니다.');
-        updateUIByRole();
-        clearForm();
+    showLogoutConfirmModal();
+}
+
+// 로그아웃 확인 모달 표시
+function showLogoutConfirmModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <p>로그아웃 하시겠습니까?</p>
+            <div class="modal-buttons">
+                <button style="background: #f44336;" onclick="confirmLogout()">로그아웃</button>
+                <button style="background: #9E9E9E;" onclick="closeLogoutModal()">취소</button>
+            </div>
+        </div>
+    `;
+    modal.id = 'logoutConfirmModal';
+    document.body.appendChild(modal);
+}
+
+// 로그아웃 실행
+function confirmLogout() {
+    currentUser = {
+        role: USER_ROLES.GUEST,
+        username: '',
+        id: ''
+    };
+    sessionStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('rememberLogin');
+    closeLogoutModal();
+    showAlert('로그아웃되었습니다.');
+    updateUIByRole();
+    clearForm();
+}
+
+// 로그아웃 모달 닫기
+function closeLogoutModal() {
+    const modal = document.getElementById('logoutConfirmModal');
+    if (modal) {
+        modal.remove();
     }
 }
 
