@@ -209,10 +209,12 @@ function showMemberDetails(index) {
     
     if (member.skillLevel !== undefined && member.skillLevel !== null) {
         let skillText = '';
-        if (member.skillLevel === -1) {
+		if (member.skillLevel === -2) {
+        skillText = '선수출신';
+		if (member.skillLevel === -1) {
             skillText = '희망';
         } else if (member.skillLevel === 0) {
-            skillText = '0부 (입문)';
+            skillText = '0부';
         } else {
             skillText = member.skillLevel + '부';
         }
