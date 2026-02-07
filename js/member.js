@@ -81,7 +81,6 @@ function sortMembers(sortBy, fromSearch) {
 }
 
 // 기본 회원 목록 렌더링
-// 기본 회원 목록 렌더링
 function renderMembers() {
     if (currentSort === 'coach') {
         renderMembersByCoach();
@@ -125,7 +124,6 @@ function renderMembers() {
             attendanceCount = '<span class="attendance-count" style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #fff; color: #ff6600; border-radius: 2px; font-size: 14px; font-weight: 500; margin-left: 5px; white-space: nowrap;">📊 ' + currentCount + '/' + targetCount + '회</span>';
         }
 
-        // 부수 정보 제거됨
         let coachBadge = '';
         if (member.coach) {
             coachBadge = '<span class="coach-badge">🏋️ ' + member.coach + '</span>';
