@@ -215,7 +215,7 @@ function showMemberDetails(index) {
 		} else if (member.skillLevel === -1) {
 			skillText = '희망';
 		} else if (member.skillLevel === 0) {
-			skillText = '0부 (최고실력자)';  // 변경: 입문 → 최고실력자
+			skillText = '0부'; 
 		} else {
 			skillText = member.skillLevel + '부';
 		}
