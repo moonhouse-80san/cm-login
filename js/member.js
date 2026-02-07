@@ -81,6 +81,7 @@ function sortMembers(sortBy, fromSearch) {
 }
 
 // 기본 회원 목록 렌더링
+// 기본 회원 목록 렌더링
 function renderMembers() {
     if (currentSort === 'coach') {
         renderMembersByCoach();
@@ -124,21 +125,7 @@ function renderMembers() {
             attendanceCount = '<span class="attendance-count" style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #fff; color: #ff6600; border-radius: 2px; font-size: 14px; font-weight: 500; margin-left: 5px; white-space: nowrap;">📊 ' + currentCount + '/' + targetCount + '회</span>';
         }
 
-        // 부수 정보 추가
-        let skillBadge = '';
-        if (member.skillLevel !== undefined && member.skillLevel !== null) {
-            const skillLevel = parseInt(member.skillLevel);
-            if (skillLevel === -2) {
-                skillBadge = '<span style="background: #FFD700; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">선수출신</span>';
-            } else if (skillLevel === 0) {
-                skillBadge = '<span style="background: #4CAF50; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">0부</span>';
-            } else if (skillLevel > 0) {
-                skillBadge = '<span style="background: #2196F3; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">' + skillLevel + '부</span>';
-            } else if (skillLevel === -1) {
-                skillBadge = '<span style="background: #9C27B0; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 5px;">희망</span>';
-            }
-        }
-
+        // 부수 정보 제거됨
         let coachBadge = '';
         if (member.coach) {
             coachBadge = '<span class="coach-badge">🏋️ ' + member.coach + '</span>';
@@ -154,7 +141,6 @@ function renderMembers() {
                     '<div class="member-name" style="cursor: pointer; color: #000; text-decoration: none;" onclick="showMemberDetails(' + originalIndex + ')">' +
                         '<span class="mcardn">' + member.name + '</span>' +
                         attendanceCount +
-                        skillBadge +
                     '</div>' +
                     '<div class="member-actions">' +
                         '<button class="' + editBtnClass + '" data-index="' + originalIndex + '" onclick="editMember(' + originalIndex + ');">수정</button>' +
