@@ -107,7 +107,7 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
 	let message =
-		memberName + '회원님 레슨 완료' +
+		memberName + '회원님 레슨 완료.' +
 		'회비 납부 부탁드립니다.';
 
 	if (bank && accountNumber) {
