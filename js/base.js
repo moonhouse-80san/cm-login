@@ -18,58 +18,26 @@ const firebaseConfig = {
   appId: "1:27409632244:web:ec4f12d66f909b03e407a1"
 };
 
-// 2. Firebase 초기화
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
-// 3. 전역 서비스 객체 (여기서 한 번만 선언!)
-const auth = firebase.auth();
-const firebaseDb = firebase.database();
-
-// 4. 권한 및 사용자 상태 정의
-const USER_ROLES = {
-    GUEST: 'guest',
-    SUB_ADMIN: 'sub_admin',
-    ADMIN: 'admin'
-};
-
-let currentUser = {
-    role: USER_ROLES.GUEST,
-    username: '',
-    id: ''
-};
-
-// 5. 전역 데이터 변수
+// 전역 변수
 let members = [];
 let filteredMembers = [];
 let settings = { 
     clubName: '',
     feePresets: [40000, 70000, 100000, 200000, 300000],
     coaches: ['', '', '', ''],
-    adminUser: { username: 'admin', password: '0000' },
-    bankAccount: { bank: '', accountNumber: '' }
+    // 로그인 시스템
+    adminUser: {
+        username: 'admin',
+        password: '0000'
+    },
+    subAdmins: [],
+    // 계좌번호 설정
+    bankAccount: {
+        bank: '',
+        accountNumber: ''
+    }
 };
-
-// 6. 공통 유틸리티 함수
-function formatNumber(num) {
-    if (num === null || num === undefined || num === '') return '0';
-    const number = typeof num === 'number' ? num : parseFloat(num);
-    if (isNaN(number)) return '0';
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const [y, m, d] = dateString.split('-');
-    return `${y}.${m}.${d}`;
-}
-
-// 초기 UI 세팅
-document.addEventListener('DOMContentLoaded', () => {
-    const registerDateEl = document.getElementById('registerDate');
-    if (registerDateEl) registerDateEl.valueAsDate = new Date();
-});
+let firebaseDb = null;
 
 // 요일 배열
 const daysOfWeek = ['월', '화', '수', '목', '금', '토', '일'];
@@ -83,58 +51,15 @@ const dayNames = {
     '일': '일요일'
 };
 
-// 1. Firebase 초기화 (앱 실행 시 한 번만)
-if (!firebase.apps.length) {
+// Firebase 초기화
+try {
     firebase.initializeApp(firebaseConfig);
+    firebaseDb = firebase.database();
+    loadFromFirebase();
+    listenToFirebaseChanges();
+} catch (error) {
+    console.error('Firebase 초기화 실패:', error);
 }
-const firebaseDb = firebase.database();
-
-/**
- * [수정된 초기화 함수] 
- * 인증이 완료된 후에만 데이터를 불러오도록 순서를 제어합니다.
- */
-function initializeLoginSystem() {
-    firebase.auth().onAuthStateChanged(async (user) => {
-        if (user) {
-            // [1단계] 로그인 유저의 권한 정보를 DB에서 가져옴
-            try {
-                const snapshot = await firebaseDb.ref(`admins/${user.uid}`).once('value');
-                const adminData = snapshot.val();
-
-                if (adminData && adminData.role) {
-                    currentUser = {
-                        role: adminData.role,
-                        username: user.email.split('@')[0],
-                        id: user.uid
-                    };
-
-                    // [2단계] 권한 확인이 끝난 후, 인증된 상태이므로 데이터를 불러옴
-                    console.log("인증 성공: 데이터를 로드합니다.");
-                    loadFromFirebase(); 
-                    listenToFirebaseChanges();
-                } else {
-                    // 로그인 유저가 admins 목록에 없는 경우
-                    currentUser = { role: 'guest', username: user.email.split('@')[0], id: user.uid };
-                    showAlert('관리자 권한이 없습니다.');
-                }
-            } catch (error) {
-                console.error("권한 확인 실패:", error);
-            }
-        } else {
-            // [로그아웃 상태]
-            currentUser = { role: 'guest', username: '', id: '' };
-            // 로그아웃 시 데이터 초기화 (선택 사항)
-            members = [];
-            renderMembers();
-        }
-        
-        // UI 업데이트 (버튼 노출 등)
-        updateUIByRole();
-    });
-}
-
-// 페이지 로드 시 감시자 시작
-document.addEventListener('DOMContentLoaded', initializeLoginSystem);
 
 // Firebase 데이터 로드
 function loadFromFirebase() {
