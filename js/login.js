@@ -1,102 +1,124 @@
-// ==================== 로그인 시스템 ====================
-// 사용자 권한 레벨
+// ==================== 통합 로그인 및 권한 관리 시스템 ====================
+
+// 1. 사용자 권한 레벨 정의
 const USER_ROLES = {
-    GUEST: 'guest',        // 비로그인 (읽기만 가능)
-    SUB_ADMIN: 'sub_admin', // 부관리자 (수정/삭제 가능, 설정 불가)
+    GUEST: 'guest',        // 비로그인 (신청만 가능)
+    SUB_ADMIN: 'sub_admin', // 부관리자 (수정 가능, 설정 불가)
     ADMIN: 'admin'          // 관리자 (모든 권한)
 };
 
-// 현재 로그인 상태
+// 2. 현재 로그인 상태 전역 변수
 let currentUser = {
     role: USER_ROLES.GUEST,
     username: '',
     id: ''
 };
 
-// 로그인 상태 초기화
+/**
+ * [초기화] 페이지 로드 시 실행되어 Firebase 인증 상태를 감시합니다.
+ */
 function initializeLoginSystem() {
-    // 로그인 유지가 체크되어 있으면 localStorage 사용, 아니면 sessionStorage 사용
-    const rememberLogin = localStorage.getItem('rememberLogin') === 'true';
-    const storage = rememberLogin ? localStorage : sessionStorage;
-    
-    const savedUser = storage.getItem('currentUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-    }
-    updateUIByRole();
+    // Firebase 인증 상태 변화 감시자
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            // [로그인 성공] DB에서 해당 유저의 권한(role)을 가져옵니다.
+            try {
+                // Realtime Database의 'admins/유저UID' 경로 확인
+                const snapshot = await firebase.database().ref(`admins/${user.uid}`).once('value');
+                const adminData = snapshot.val();
+
+                if (adminData && adminData.role) {
+                    // DB에 권한 설정이 있는 경우 (admin 또는 sub_admin)
+                    currentUser = {
+                        role: adminData.role,
+                        username: user.email.split('@')[0],
+                        id: user.uid
+                    };
+                } else {
+                    // 인증은 되었으나 DB에 권한 등록이 없는 경우 (손님 취급)
+                    currentUser = {
+                        role: USER_ROLES.GUEST,
+                        username: user.email.split('@')[0],
+                        id: user.uid
+                    };
+                }
+            } catch (error) {
+                console.error("권한 조회 중 오류 발생:", error);
+                currentUser.role = USER_ROLES.GUEST;
+            }
+        } else {
+            // [로그아웃 상태]
+            currentUser = {
+                role: USER_ROLES.GUEST,
+                username: '',
+                id: ''
+            };
+        }
+        
+        // 권한에 맞춰 UI(버튼 노출 등) 업데이트
+        updateUIByRole();
+    });
 }
 
-// 로그인 함수
+/**
+ * [로그인 실행] Firebase Authentication 사용
+ */
 function login() {
-    const username = document.getElementById('loginUsername').value.trim();
+    const email = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberLogin').checked;
 
-    if (!username || !password) {
-        showAlert('아이디와 비밀번호를 입력해주세요!');
+    if (!email || !password) {
+        showAlert('이메일과 비밀번호를 입력해주세요!');
         return;
     }
 
-    // 관리자 확인
-    if (settings.adminUser && 
-        username === settings.adminUser.username && 
-        password === settings.adminUser.password) {
-        currentUser = {
-            role: USER_ROLES.ADMIN,
-            username: username,
-            id: 'admin'
-        };
-        saveLoginState(rememberMe);
-        closeLoginModal();
-        showAlert(`환영합니다, ${username}님! (관리자)`);
-        updateUIByRole();
-        return;
-    }
+    // 로그인 유지 설정 (LOCAL: 브라우저 닫아도 유지, SESSION: 탭 닫으면 로그아웃)
+    const persistence = rememberMe 
+        ? firebase.auth.Auth.Persistence.LOCAL 
+        : firebase.auth.Auth.Persistence.SESSION;
 
-    // 부관리자 확인
-    if (settings.subAdmins && settings.subAdmins.length > 0) {
-        const subAdmin = settings.subAdmins.find(sa => 
-            sa.username === username && sa.password === password
-        );
-        if (subAdmin) {
-            currentUser = {
-                role: USER_ROLES.SUB_ADMIN,
-                username: username,
-                id: subAdmin.id
-            };
-            saveLoginState(rememberMe);
+    firebase.auth().setPersistence(persistence)
+        .then(() => {
+            return firebase.auth().signInWithEmailAndPassword(email, password);
+        })
+        .then(() => {
+            showAlert('반갑습니다!');
             closeLoginModal();
-            showAlert(`환영합니다, ${username}님! (부관리자)`);
-            updateUIByRole();
-            return;
-        }
-    }
-
-    showAlert('아이디 또는 비밀번호가 잘못되었습니다!');
+        })
+        .catch((error) => {
+            console.error("로그인 실패:", error.code);
+            let message = "로그인에 실패했습니다.";
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                message = "이메일 또는 비밀번호가 일치하지 않습니다.";
+            }
+            showAlert(message);
+        });
 }
 
-// 로그인 상태 저장 헬퍼 함수
-function saveLoginState(rememberMe) {
-    if (rememberMe) {
-        localStorage.setItem('rememberLogin', 'true');
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        sessionStorage.removeItem('currentUser');
-    } else {
-        localStorage.removeItem('rememberLogin');
-        localStorage.removeItem('currentUser');
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
+/**
+ * [로그아웃 실행]
+ */
+function confirmLogout() {
+    firebase.auth().signOut().then(() => {
+        closeLogoutModal();
+        showAlert('로그아웃되었습니다.');
+        // onAuthStateChanged가 감지하여 UI를 자동으로 guest로 바꿉니다.
+    }).catch((error) => {
+        showAlert('로그아웃 중 오류가 발생했습니다.');
+    });
 }
 
-// 로그아웃 함수
+// --- 모달 및 헬퍼 함수 (기존 로직 유지) ---
+
 function logout() {
     showLogoutConfirmModal();
 }
 
-// 로그아웃 확인 모달 표시
 function showLogoutConfirmModal() {
     const modal = document.createElement('div');
     modal.className = 'modal active';
+    modal.id = 'logoutConfirmModal';
     modal.innerHTML = `
         <div class="modal-content">
             <p>로그아웃 하시겠습니까?</p>
@@ -106,189 +128,35 @@ function showLogoutConfirmModal() {
             </div>
         </div>
     `;
-    modal.id = 'logoutConfirmModal';
     document.body.appendChild(modal);
 }
 
-// 로그아웃 실행
-function confirmLogout() {
-    currentUser = {
-        role: USER_ROLES.GUEST,
-        username: '',
-        id: ''
-    };
-    sessionStorage.removeItem('currentUser');
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('rememberLogin');
-    closeLogoutModal();
-    showAlert('로그아웃되었습니다.');
-    updateUIByRole();
-    clearForm();
-}
-
-// 로그아웃 모달 닫기
 function closeLogoutModal() {
     const modal = document.getElementById('logoutConfirmModal');
-    if (modal) {
-        modal.remove();
-    }
+    if (modal) modal.remove();
 }
 
-// 권한에 따른 UI 업데이트
-function updateUIByRole() {
-    const role = currentUser.role;
-    const currentCountInput = document.getElementById('currentCount');
-    const privateMemoSection = document.getElementById('privateMemoSection');
-    const updateBtn = document.getElementById('updateBtn');
-    const settingsUserStatus = document.getElementById('settingsUserStatus');
-    const settingsLogoutBtn = document.getElementById('settingsLogoutBtn');
-    const logoutIcon = document.getElementById('logoutIcon');
-    const syncStatus = document.getElementById('syncStatus');
-    
-    // 레슨 관리 섹션 표시/숨김 - 비로그인 사용자는 완전히 숨김
-    const lessonManagementSection = document.getElementById('lessonManagementSection');
-    if (lessonManagementSection) {
-        // 관리자 또는 부관리자일 때만 표시, 비로그인은 완전히 숨김
-        if (role === USER_ROLES.ADMIN || role === USER_ROLES.SUB_ADMIN) {
-            lessonManagementSection.style.display = 'block';
-        } else {
-            lessonManagementSection.style.display = 'none';
-            // 달력이 열려있다면 닫기
-            const calendar = document.getElementById('formCalendar');
-            if (calendar) {
-                calendar.style.display = 'none';
-            }
-            const toggleText = document.getElementById('calendarToggleText');
-            if (toggleText) {
-                toggleText.textContent = '달력 열기';
-            }
-        }
-    }
-    
-    // 동기화 버튼 표시/숨김 (로그인 시에만 표시)
-    if (syncStatus) {
-        syncStatus.style.display = role === USER_ROLES.GUEST ? 'none' : 'block';
-    }
-    
-    // 헤더의 로그아웃 아이콘 표시/숨김
-    if (logoutIcon) {
-        logoutIcon.style.display = role === USER_ROLES.GUEST ? 'none' : 'flex';
-    }
-    
-    // 설정 모달의 로그인 상태 표시
-    if (settingsUserStatus) {
-        if (role === USER_ROLES.GUEST) {
-            settingsUserStatus.textContent = '👤 손님';
-            settingsUserStatus.style.color = '#999';
-        } else {
-            const roleText = role === USER_ROLES.ADMIN ? '👑 관리자' : '🔰 부관리자';
-            const roleColor = role === USER_ROLES.ADMIN ? '#FFD700' : '#4FC3F7';
-            settingsUserStatus.innerHTML = `<span style="color: ${roleColor};">${roleText}</span> ${currentUser.username}`;
-        }
-    }
-    
-    // 설정 모달의 로그아웃 버튼
-    if (settingsLogoutBtn) {
-        settingsLogoutBtn.style.display = role === USER_ROLES.GUEST ? 'none' : 'block';
-    }
-    
-    // 수정 버튼 상태
-    if (updateBtn) {
-        if (role === USER_ROLES.GUEST) {
-            updateBtn.classList.add('btn-disabled');
-            updateBtn.classList.remove('btn-update');
-        } else {
-            updateBtn.classList.remove('btn-disabled');
-            updateBtn.classList.add('btn-update');
-        }
-    }
-
-    // 현재 레슨 횟수 입력란
-    if (currentCountInput) {
-        if (role === USER_ROLES.GUEST) {
-            currentCountInput.setAttribute('readonly', true);
-            currentCountInput.style.background = '#f0f0f0';
-        } else {
-            currentCountInput.removeAttribute('readonly');
-            currentCountInput.style.background = '#ffffff';
-        }
-    }
-
-    // 비밀글 섹션
-    if (privateMemoSection) {
-        privateMemoSection.style.display = (role !== USER_ROLES.GUEST) ? 'block' : 'none';
-    }
-
-    // 회원 목록 재렌더링
-    renderMembers();
-}
-
-// 로그인 모달 열기
 function openLoginModal() {
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginModal').classList.add('active');
 }
 
-// 로그인 모달 닫기
 function closeLoginModal() {
     document.getElementById('loginModal').classList.remove('active');
 }
 
-// 설정 아이콘 클릭 처리
-function handleSettingsClick() {
-    // 로그인되어 있지 않으면 로그인 모달 띄우기
-    if (!hasEditPermission()) {
-        openLoginModal();
-    } else {
-        // 로그인되어 있으면 기존 설정 열기
-        openSettings();
-    }
-}
+// --- 권한 확인용 헬퍼 함수 ---
 
-// 권한 확인 헬퍼 함수
 function hasEditPermission() {
-    return currentUser.role !== USER_ROLES.GUEST;
-}
-
-function hasSettingsPermission() {
-    return currentUser.role === USER_ROLES.ADMIN;
-}
-
-function hasLessonManagementPermission() {
-    // 관리자 또는 부관리자만 레슨 관리 가능
+    // 관리자나 부관리자 둘 다 수정 가능
     return currentUser.role === USER_ROLES.ADMIN || currentUser.role === USER_ROLES.SUB_ADMIN;
 }
 
-// 수정 전 권한 확인
-function checkPermissionBeforeUpdate() {
-    if (!hasEditPermission()) {
-        showAlert('수정 권한이 없습니다. 로그인해주세요!');
-        openLoginModal();
-        return false;
-    }
-    return updateMember();
+function hasSettingsPermission() {
+    // 설정 메뉴는 오직 'admin'만 접근 가능
+    return currentUser.role === USER_ROLES.ADMIN;
 }
 
-// 삭제 전 권한 확인
-function checkPermissionBeforeDelete(index) {
-    if (!hasEditPermission()) {
-        showAlert('삭제 권한이 없습니다. 로그인해주세요!');
-        openLoginModal();
-        return false;
-    }
-    showDeleteModal(index);
-    return true;
-}
-
-// 설정 열기 전 권한 확인
-function checkPermissionBeforeSettings() {
-    if (!hasSettingsPermission()) {
-        showAlert('설정 메뉴는 관리자만 접근 가능합니다!');
-        return false;
-    }
-    return true;
-}
-
-// 페이지 로드 시 로그인 시스템 초기화
+// 페이지 로드 시 초기화 실행
 document.addEventListener('DOMContentLoaded', initializeLoginSystem);

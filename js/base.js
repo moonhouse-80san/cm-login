@@ -18,6 +18,24 @@ const firebaseConfig = {
   appId: "1:27409632244:web:ec4f12d66f909b03e407a1"
 };
 
+// 2. Firebase 초기화
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+// [추가] 3. 인증 서비스 연결
+const auth = firebase.auth();
+const database = firebase.database();
+
+// [수정] 4. 전역 변수 설정
+// 이제 currentUser는 로컬 스토리지에서 가져오는 게 아니라, 
+// login.js의 initializeLoginSystem()에서 서버와 통신하며 채워질 것입니다.
+let currentUser = {
+    role: 'guest',
+    username: '',
+    id: ''
+};
+
 // 전역 변수
 let members = [];
 let filteredMembers = [];
