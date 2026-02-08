@@ -14,137 +14,82 @@ let currentUser = {
     id: ''
 };
 
-/**
- * [초기화] 페이지 로드 시 실행되어 Firebase 인증 상태를 감시합니다.
- */
 function initializeLoginSystem() {
-    // Firebase 인증 상태 변화 감시자
-    firebase.auth().onAuthStateChanged(async (user) => {
+    // Firebase 인증 상태 감시
+    auth.onAuthStateChanged(async (user) => {
         if (user) {
-            // [로그인 성공] DB에서 해당 유저의 권한(role)을 가져옵니다.
             try {
-                // Realtime Database의 'admins/유저UID' 경로 확인
-                const snapshot = await firebase.database().ref(`admins/${user.uid}`).once('value');
+                // DB에서 사용자 권한 확인
+                const snapshot = await firebaseDb.ref(`admins/${user.uid}`).once('value');
                 const adminData = snapshot.val();
 
                 if (adminData && adminData.role) {
-                    // DB에 권한 설정이 있는 경우 (admin 또는 sub_admin)
-                    currentUser = {
-                        role: adminData.role,
-                        username: user.email.split('@')[0],
-                        id: user.uid
-                    };
-                } else {
-                    // 인증은 되었으나 DB에 권한 등록이 없는 경우 (손님 취급)
-                    currentUser = {
-                        role: USER_ROLES.GUEST,
-                        username: user.email.split('@')[0],
-                        id: user.uid
-                    };
+                    // base.js에서 선언된 currentUser의 값 업데이트
+                    currentUser.role = adminData.role;
+                    currentUser.username = user.email.split('@')[0];
+                    currentUser.id = user.uid;
+
+                    console.log("🔓 인증 완료:", currentUser.role);
+                    
+                    // 인증 완료 후 데이터 로드 실행
+                    if (typeof loadFromFirebase === 'function') loadFromFirebase();
+                    if (typeof listenToFirebaseChanges === 'function') listenToFirebaseChanges();
                 }
             } catch (error) {
-                console.error("권한 조회 중 오류 발생:", error);
-                currentUser.role = USER_ROLES.GUEST;
+                console.error("권한 로드 에러:", error);
             }
         } else {
-            // [로그아웃 상태]
-            currentUser = {
-                role: USER_ROLES.GUEST,
-                username: '',
-                id: ''
-            };
+            // 로그아웃 상태일 때 초기화
+            currentUser.role = USER_ROLES.GUEST;
+            currentUser.username = '';
+            currentUser.id = '';
         }
         
-        // 권한에 맞춰 UI(버튼 노출 등) 업데이트
-        updateUIByRole();
+        // UI 업데이트 호출 (각 페이지별 버튼 노출 여부 등)
+        if (typeof updateUIByRole === 'function') updateUIByRole();
     });
 }
 
-/**
- * [로그인 실행] Firebase Authentication 사용
- */
 function login() {
-    const email = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const rememberMe = document.getElementById('rememberLogin').checked;
+    const id = document.getElementById('loginUsername').value.trim();
+    const pw = document.getElementById('loginPassword').value;
 
-    if (!email || !password) {
-        showAlert('이메일과 비밀번호를 입력해주세요!');
+    if (!id || !pw) {
+        alert("아이디와 비밀번호를 입력하세요.");
         return;
     }
 
-    // 로그인 유지 설정 (LOCAL: 브라우저 닫아도 유지, SESSION: 탭 닫으면 로그아웃)
-    const persistence = rememberMe 
-        ? firebase.auth.Auth.Persistence.LOCAL 
-        : firebase.auth.Auth.Persistence.SESSION;
-
-    firebase.auth().setPersistence(persistence)
+    // 아이디를 이메일 형식으로 변환하여 로그인
+    auth.signInWithEmailAndPassword(id + "@email.com", pw)
         .then(() => {
-            return firebase.auth().signInWithEmailAndPassword(email, password);
-        })
-        .then(() => {
-            showAlert('반갑습니다!');
             closeLoginModal();
+            alert("로그인 성공");
         })
-        .catch((error) => {
-            console.error("로그인 실패:", error.code);
-            let message = "로그인에 실패했습니다.";
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                message = "이메일 또는 비밀번호가 일치하지 않습니다.";
-            }
-            showAlert(message);
-        });
+        .catch(err => alert("로그인 실패: " + err.message));
 }
 
-/**
- * [로그아웃 실행]
- */
 function confirmLogout() {
-    firebase.auth().signOut().then(() => {
-        closeLogoutModal();
-        showAlert('로그아웃되었습니다.');
-        // onAuthStateChanged가 감지하여 UI를 자동으로 guest로 바꿉니다.
-    }).catch((error) => {
-        showAlert('로그아웃 중 오류가 발생했습니다.');
+    auth.signOut().then(() => {
+        alert("로그아웃 되었습니다.");
+        location.reload();
     });
 }
 
-// --- 모달 및 헬퍼 함수 (기존 로직 유지) ---
-
-function logout() {
-    showLogoutConfirmModal();
+function hasEditPermission() {
+    return currentUser.role === USER_ROLES.ADMIN || currentUser.role === USER_ROLES.SUB_ADMIN;
 }
 
-function showLogoutConfirmModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.id = 'logoutConfirmModal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <p>로그아웃 하시겠습니까?</p>
-            <div class="modal-buttons">
-                <button style="background: #f44336;" onclick="confirmLogout()">로그아웃</button>
-                <button style="background: #9E9E9E;" onclick="closeLogoutModal()">취소</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
+function handleSettingsClick() {
+    if (currentUser.role === USER_ROLES.GUEST) {
+        openLoginModal();
+    } else {
+        if (typeof openSettings === 'function') openSettings();
+    }
 }
 
-function closeLogoutModal() {
-    const modal = document.getElementById('logoutConfirmModal');
-    if (modal) modal.remove();
-}
-
-function openLoginModal() {
-    document.getElementById('loginUsername').value = '';
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('loginModal').classList.add('active');
-}
-
-function closeLoginModal() {
-    document.getElementById('loginModal').classList.remove('active');
-}
+// 모달 제어 함수
+function openLoginModal() { document.getElementById('loginModal').classList.add('active'); }
+function closeLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
 
 // --- 권한 확인용 헬퍼 함수 ---
 
