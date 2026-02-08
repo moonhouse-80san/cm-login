@@ -10,8 +10,30 @@ const USER_ROLES = {
 let currentUser = {
     role: USER_ROLES.GUEST,
     username: '',
+    email: '',
     id: ''
 };
+
+// 아이디를 내부 이메일 형식으로 변환
+function convertToInternalEmail(username) {
+    // 이미 @ 포함되어 있으면 그대로 사용 (기존 이메일 계정 호환)
+    if (username.includes('@')) {
+        return username;
+    }
+    // 아이디만 입력한 경우 내부 도메인 추가
+    return username + '@clubapp.internal';
+}
+
+// 내부 이메일을 아이디로 변환 (표시용)
+function convertToUsername(email) {
+    if (!email) return '';
+    // @clubapp.internal 도메인 제거
+    if (email.endsWith('@clubapp.internal')) {
+        return email.replace('@clubapp.internal', '');
+    }
+    // 일반 이메일은 그대로 반환
+    return email;
+}
 
 // 로그인 상태 초기화
 function initializeLoginSystem() {
@@ -29,13 +51,18 @@ function initializeLoginSystem() {
                         
                         if (adminData && adminData.role) {
                             // 역할이 있는 경우
+                            // 이메일을 아이디로 변환하여 표시
+                            const displayUsername = convertToUsername(user.email);
+                            
                             currentUser = {
                                 role: adminData.role, // 'admin' 또는 'sub_admin'
-                                username: user.email,
+                                username: displayUsername,  // 아이디로 표시
+                                email: user.email,  // 실제 이메일 보관
                                 id: user.uid
                             };
                             
                             console.log('✅ 사용자 역할:', currentUser.role);
+                            console.log('✅ 표시 이름:', currentUser.username);
                             updateUIByRole();
                             
                             // 로그인 모달이 열려있으면 닫기
@@ -58,6 +85,7 @@ function initializeLoginSystem() {
                 currentUser = {
                     role: USER_ROLES.GUEST,
                     username: '',
+                    email: '',
                     id: ''
                 };
                 updateUIByRole();
@@ -68,17 +96,21 @@ function initializeLoginSystem() {
 
 // 로그인 함수
 function login() {
-    const email = document.getElementById('loginUsername').value.trim();
+    const usernameInput = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberLogin').checked;
 
-    console.log('🔑 로그인 시도:', email);
-    console.log('📌 로그인 상태 유지:', rememberMe);
+    console.log('🔑 로그인 시도 - 입력된 아이디:', usernameInput);
 
-    if (!email || !password) {
-        showAlert('이메일과 비밀번호를 입력해주세요!');
+    if (!usernameInput || !password) {
+        showAlert('아이디와 비밀번호를 입력해주세요!');
         return;
     }
+
+    // 아이디를 내부 이메일 형식으로 변환
+    const email = convertToInternalEmail(usernameInput);
+    console.log('📧 변환된 이메일:', email);
+    console.log('📌 로그인 상태 유지:', rememberMe);
 
     // 로그인 상태 유지 설정
     const persistence = rememberMe 
@@ -114,19 +146,24 @@ function login() {
                 const role = adminData.role;
                 const roleText = role === 'admin' ? '관리자' : '부관리자';
                 
+                // 이메일을 아이디로 변환하여 표시
+                const displayUsername = convertToUsername(firebaseAuth.currentUser.email);
+                
                 currentUser = {
                     role: role,
-                    username: firebaseAuth.currentUser.email,
+                    username: displayUsername,  // 아이디로 표시
+                    email: firebaseAuth.currentUser.email,  // 실제 이메일 보관
                     id: firebaseAuth.currentUser.uid
                 };
                 
                 console.log('✅ 역할 설정 완료:');
                 console.log('  - role:', currentUser.role);
-                console.log('  - username:', currentUser.username);
+                console.log('  - username (표시용):', currentUser.username);
+                console.log('  - email (실제):', currentUser.email);
                 console.log('  - id:', currentUser.id);
                 
                 closeLoginModal();
-                showAlert(`환영합니다! (${roleText})`);
+                showAlert(`환영합니다, ${displayUsername}님! (${roleText})`);
                 updateUIByRole();
             } else {
                 // admins 테이블에 역할이 없는 경우
@@ -148,9 +185,9 @@ function login() {
             if (error.code === 'auth/wrong-password') {
                 errorMessage = '비밀번호가 올바르지 않습니다.';
             } else if (error.code === 'auth/user-not-found') {
-                errorMessage = '등록되지 않은 이메일입니다.';
+                errorMessage = '등록되지 않은 아이디입니다.';
             } else if (error.code === 'auth/invalid-email') {
-                errorMessage = '올바른 이메일 형식이 아닙니다.';
+                errorMessage = '올바른 아이디 형식이 아닙니다.';
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
             } else if (error.code === 'auth/network-request-failed') {
@@ -192,6 +229,7 @@ function confirmLogout() {
             currentUser = {
                 role: USER_ROLES.GUEST,
                 username: '',
+                email: '',
                 id: ''
             };
             closeLogoutModal();
