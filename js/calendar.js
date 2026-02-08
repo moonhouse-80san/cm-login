@@ -56,7 +56,6 @@ function sendWelcomeSMS(memberName, memberPhone) {
 		'즐거운 탁구 생활 되세요.';
 
 	if (bank && accountNumber) {
-		// 콜론 제거 + 한 줄 유지
 		message += ' 계좌 ' + bank + ' ' + accountNumber;
 	}
 
@@ -107,11 +106,11 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     const accountNumber = settings.bankAccount?.accountNumber || '';
     
 	let message =
-		memberName + '회원님 레슨 완료.' +
+		memberName + '회원님 레슨 완료. ' +
 		'회비 납부 부탁드립니다.';
 
 	if (bank && accountNumber) {
-		message += ' 납부계좌 ' + bank + accountNumber;
+		message += ' 계좌 ' + bank + accountNumber;
 	}
 
 	message += ' - ' + clubName;
