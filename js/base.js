@@ -69,15 +69,58 @@ const dayNames = {
     '일': '일요일'
 };
 
-// Firebase 초기화
-try {
+// 1. Firebase 초기화 (앱 실행 시 한 번만)
+if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
-    firebaseDb = firebase.database();
-    loadFromFirebase();
-    listenToFirebaseChanges();
-} catch (error) {
-    console.error('Firebase 초기화 실패:', error);
 }
+const firebaseDb = firebase.database();
+
+/**
+ * [수정된 초기화 함수] 
+ * 인증이 완료된 후에만 데이터를 불러오도록 순서를 제어합니다.
+ */
+function initializeLoginSystem() {
+    firebase.auth().onAuthStateChanged(async (user) => {
+        if (user) {
+            // [1단계] 로그인 유저의 권한 정보를 DB에서 가져옴
+            try {
+                const snapshot = await firebaseDb.ref(`admins/${user.uid}`).once('value');
+                const adminData = snapshot.val();
+
+                if (adminData && adminData.role) {
+                    currentUser = {
+                        role: adminData.role,
+                        username: user.email.split('@')[0],
+                        id: user.uid
+                    };
+
+                    // [2단계] 권한 확인이 끝난 후, 인증된 상태이므로 데이터를 불러옴
+                    console.log("인증 성공: 데이터를 로드합니다.");
+                    loadFromFirebase(); 
+                    listenToFirebaseChanges();
+                } else {
+                    // 로그인 유저가 admins 목록에 없는 경우
+                    currentUser = { role: 'guest', username: user.email.split('@')[0], id: user.uid };
+                    showAlert('관리자 권한이 없습니다.');
+                }
+            } catch (error) {
+                console.error("권한 확인 실패:", error);
+            }
+        } else {
+            // [로그아웃 상태]
+            currentUser = { role: 'guest', username: '', id: '' };
+            // 로그아웃 시 데이터 초기화 (선택 사항)
+            members = [];
+            renderMembers();
+        }
+        
+        // UI 업데이트 (버튼 노출 등)
+        updateUIByRole();
+    });
+}
+
+// 페이지 로드 시 감시자 시작
+document.addEventListener('DOMContentLoaded', initializeLoginSystem);
 
 // Firebase 데이터 로드
 function loadFromFirebase() {
