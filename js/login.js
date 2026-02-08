@@ -15,77 +15,150 @@ let currentUser = {
 
 // 로그인 상태 초기화
 function initializeLoginSystem() {
-    // 로그인 유지가 체크되어 있으면 localStorage 사용, 아니면 sessionStorage 사용
-    const rememberLogin = localStorage.getItem('rememberLogin') === 'true';
-    const storage = rememberLogin ? localStorage : sessionStorage;
-    
-    const savedUser = storage.getItem('currentUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
+    // Firebase Auth 상태 변경 리스너
+    if (firebaseAuth) {
+        firebaseAuth.onAuthStateChanged((user) => {
+            if (user) {
+                // 로그인된 상태
+                console.log('✅ 로그인 상태 감지:', user.email, 'UID:', user.uid);
+                
+                // Firebase Realtime Database에서 사용자 역할(role) 확인
+                firebaseDb.ref('admins/' + user.uid).once('value')
+                    .then((snapshot) => {
+                        const adminData = snapshot.val();
+                        
+                        if (adminData && adminData.role) {
+                            // 역할이 있는 경우
+                            currentUser = {
+                                role: adminData.role, // 'admin' 또는 'sub_admin'
+                                username: user.email,
+                                id: user.uid
+                            };
+                            
+                            console.log('✅ 사용자 역할:', currentUser.role);
+                            updateUIByRole();
+                            
+                            // 로그인 모달이 열려있으면 닫기
+                            closeLoginModal();
+                        } else {
+                            // admins 테이블에 없는 사용자 (권한 없음)
+                            console.warn('⚠️ 권한이 없는 사용자:', user.email);
+                            showAlert('이 계정은 관리 권한이 없습니다.');
+                            firebaseAuth.signOut();
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('❌ 역할 확인 실패:', error);
+                        showAlert('사용자 정보를 확인할 수 없습니다.');
+                        firebaseAuth.signOut();
+                    });
+            } else {
+                // 로그아웃 상태
+                console.log('ℹ️ 비로그인 상태');
+                currentUser = {
+                    role: USER_ROLES.GUEST,
+                    username: '',
+                    id: ''
+                };
+                updateUIByRole();
+            }
+        });
     }
-    updateUIByRole();
 }
 
 // 로그인 함수
 function login() {
-    const username = document.getElementById('loginUsername').value.trim();
+    const email = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
     const rememberMe = document.getElementById('rememberLogin').checked;
 
-    if (!username || !password) {
-        showAlert('아이디와 비밀번호를 입력해주세요!');
+    console.log('🔑 로그인 시도:', email);
+    console.log('📌 로그인 상태 유지:', rememberMe);
+
+    if (!email || !password) {
+        showAlert('이메일과 비밀번호를 입력해주세요!');
         return;
     }
 
-    // 관리자 확인
-    if (settings.adminUser && 
-        username === settings.adminUser.username && 
-        password === settings.adminUser.password) {
-        currentUser = {
-            role: USER_ROLES.ADMIN,
-            username: username,
-            id: 'admin'
-        };
-        saveLoginState(rememberMe);
-        closeLoginModal();
-        showAlert(`환영합니다, ${username}님! (관리자)`);
-        updateUIByRole();
-        return;
-    }
+    // 로그인 상태 유지 설정
+    const persistence = rememberMe 
+        ? firebase.auth.Auth.Persistence.LOCAL    // 브라우저 닫아도 유지
+        : firebase.auth.Auth.Persistence.SESSION; // 탭 닫으면 로그아웃
+    
+    console.log('🔒 Persistence 모드:', rememberMe ? 'LOCAL (영구 유지)' : 'SESSION (세션만 유지)');
 
-    // 부관리자 확인
-    if (settings.subAdmins && settings.subAdmins.length > 0) {
-        const subAdmin = settings.subAdmins.find(sa => 
-            sa.username === username && sa.password === password
-        );
-        if (subAdmin) {
-            currentUser = {
-                role: USER_ROLES.SUB_ADMIN,
-                username: username,
-                id: subAdmin.id
-            };
-            saveLoginState(rememberMe);
-            closeLoginModal();
-            showAlert(`환영합니다, ${username}님! (부관리자)`);
-            updateUIByRole();
-            return;
-        }
-    }
-
-    showAlert('아이디 또는 비밀번호가 잘못되었습니다!');
-}
-
-// 로그인 상태 저장 헬퍼 함수
-function saveLoginState(rememberMe) {
-    if (rememberMe) {
-        localStorage.setItem('rememberLogin', 'true');
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        sessionStorage.removeItem('currentUser');
-    } else {
-        localStorage.removeItem('rememberLogin');
-        localStorage.removeItem('currentUser');
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
+    // Persistence 설정 후 로그인
+    firebaseAuth.setPersistence(persistence)
+        .then(() => {
+            console.log('✅ Persistence 설정 완료');
+            // Firebase Authentication으로 로그인
+            return firebaseAuth.signInWithEmailAndPassword(email, password);
+        })
+        .then((userCredential) => {
+            // 로그인 성공
+            const user = userCredential.user;
+            console.log('✅ Firebase Auth 로그인 성공');
+            console.log('  - 이메일:', user.email);
+            console.log('  - UID:', user.uid);
+            
+            // Firebase Realtime Database에서 역할 확인
+            console.log('🔍 역할 확인 중... 경로: /admins/' + user.uid);
+            return firebaseDb.ref('admins/' + user.uid).once('value');
+        })
+        .then((snapshot) => {
+            const adminData = snapshot.val();
+            console.log('📊 Database 응답:', adminData);
+            
+            if (adminData && adminData.role) {
+                // 역할이 있는 경우
+                const role = adminData.role;
+                const roleText = role === 'admin' ? '관리자' : '부관리자';
+                
+                currentUser = {
+                    role: role,
+                    username: firebaseAuth.currentUser.email,
+                    id: firebaseAuth.currentUser.uid
+                };
+                
+                console.log('✅ 역할 설정 완료:');
+                console.log('  - role:', currentUser.role);
+                console.log('  - username:', currentUser.username);
+                console.log('  - id:', currentUser.id);
+                
+                closeLoginModal();
+                showAlert(`환영합니다! (${roleText})`);
+                updateUIByRole();
+            } else {
+                // admins 테이블에 역할이 없는 경우
+                console.error('❌ 역할 없음:', adminData);
+                console.error('  - UID:', firebaseAuth.currentUser.uid);
+                console.error('  - 확인 경로: /admins/' + firebaseAuth.currentUser.uid);
+                showAlert('이 계정은 관리 권한이 없습니다.\n\nFirebase Console에서 다음 경로에 역할을 추가해주세요:\n/admins/' + firebaseAuth.currentUser.uid + '/role = "admin"');
+                firebaseAuth.signOut();
+            }
+        })
+        .catch((error) => {
+            console.error('❌ 로그인 실패:', error);
+            console.error('  - 에러 코드:', error.code);
+            console.error('  - 에러 메시지:', error.message);
+            
+            // 에러 메시지 처리
+            let errorMessage = '로그인에 실패했습니다.';
+            
+            if (error.code === 'auth/wrong-password') {
+                errorMessage = '비밀번호가 올바르지 않습니다.';
+            } else if (error.code === 'auth/user-not-found') {
+                errorMessage = '등록되지 않은 이메일입니다.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = '올바른 이메일 형식이 아닙니다.';
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMessage = '네트워크 연결을 확인해주세요.';
+            }
+            
+            showAlert(errorMessage);
+        });
 }
 
 // 로그아웃 함수
@@ -112,18 +185,24 @@ function showLogoutConfirmModal() {
 
 // 로그아웃 실행
 function confirmLogout() {
-    currentUser = {
-        role: USER_ROLES.GUEST,
-        username: '',
-        id: ''
-    };
-    sessionStorage.removeItem('currentUser');
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('rememberLogin');
-    closeLogoutModal();
-    showAlert('로그아웃되었습니다.');
-    updateUIByRole();
-    clearForm();
+    // Firebase Auth 로그아웃
+    firebaseAuth.signOut()
+        .then(() => {
+            console.log('✅ 로그아웃 성공');
+            currentUser = {
+                role: USER_ROLES.GUEST,
+                username: '',
+                id: ''
+            };
+            closeLogoutModal();
+            showAlert('로그아웃되었습니다.');
+            updateUIByRole();
+            clearForm();
+        })
+        .catch((error) => {
+            console.error('❌ 로그아웃 실패:', error);
+            showAlert('로그아웃에 실패했습니다.');
+        });
 }
 
 // 로그아웃 모달 닫기
@@ -227,6 +306,13 @@ function updateUIByRole() {
 function openLoginModal() {
     document.getElementById('loginUsername').value = '';
     document.getElementById('loginPassword').value = '';
+    
+    // 로그인 상태 유지 체크박스 - 기본값은 체크된 상태로
+    const rememberCheckbox = document.getElementById('rememberLogin');
+    if (rememberCheckbox) {
+        rememberCheckbox.checked = true; // 기본값: 체크됨 (로그인 상태 유지)
+    }
+    
     document.getElementById('loginModal').classList.add('active');
 }
 
@@ -248,16 +334,22 @@ function handleSettingsClick() {
 
 // 권한 확인 헬퍼 함수
 function hasEditPermission() {
-    return currentUser.role !== USER_ROLES.GUEST;
+    const result = currentUser.role !== USER_ROLES.GUEST;
+    console.log('✅ hasEditPermission:', result, '현재 역할:', currentUser.role);
+    return result;
 }
 
 function hasSettingsPermission() {
-    return currentUser.role === USER_ROLES.ADMIN;
+    const result = currentUser.role === USER_ROLES.ADMIN;
+    console.log('✅ hasSettingsPermission:', result, '현재 역할:', currentUser.role);
+    return result;
 }
 
 function hasLessonManagementPermission() {
     // 관리자 또는 부관리자만 레슨 관리 가능
-    return currentUser.role === USER_ROLES.ADMIN || currentUser.role === USER_ROLES.SUB_ADMIN;
+    const result = currentUser.role === USER_ROLES.ADMIN || currentUser.role === USER_ROLES.SUB_ADMIN;
+    console.log('✅ hasLessonManagementPermission:', result, '현재 역할:', currentUser.role);
+    return result;
 }
 
 // 수정 전 권한 확인

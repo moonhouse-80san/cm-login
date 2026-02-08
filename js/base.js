@@ -25,12 +25,6 @@ let settings = {
     clubName: '',
     feePresets: [40000, 70000, 100000, 200000, 300000],
     coaches: ['', '', '', ''],
-    // 로그인 시스템
-    adminUser: {
-        username: 'admin',
-        password: '0000'
-    },
-    subAdmins: [],
     // 계좌번호 설정
     bankAccount: {
         bank: '',
@@ -38,6 +32,7 @@ let settings = {
     }
 };
 let firebaseDb = null;
+let firebaseAuth = null;
 
 // 요일 배열
 const daysOfWeek = ['월', '화', '수', '목', '금', '토', '일'];
@@ -55,6 +50,10 @@ const dayNames = {
 try {
     firebase.initializeApp(firebaseConfig);
     firebaseDb = firebase.database();
+    firebaseAuth = firebase.auth();
+    
+    console.log('✅ Firebase 초기화 완료');
+    
     loadFromFirebase();
     listenToFirebaseChanges();
 } catch (error) {
@@ -79,8 +78,6 @@ function loadFromFirebase() {
             settings.clubName = data.clubName || '';
             settings.feePresets = data.feePresets || settings.feePresets;
             settings.coaches = data.coaches || ['', '', '', ''];
-            settings.adminUser = data.adminUser || settings.adminUser;
-            settings.subAdmins = data.subAdmins || [];
             settings.bankAccount = data.bankAccount || settings.bankAccount;
 
             document.getElementById('clubNameDisplay').textContent = settings.clubName || '구장명을 설정하세요';

@@ -1,20 +1,28 @@
 function openSettings() {
+    console.log('🔧 openSettings 호출됨');
+    console.log('현재 사용자:', currentUser);
+    console.log('hasSettingsPermission():', hasSettingsPermission());
+    
     // 관리자만 접근 가능
-    if (!checkPermissionBeforeSettings()) {
+    if (!hasSettingsPermission()) {
+        console.warn('⚠️ 설정 접근 거부 - 관리자 권한 없음');
+        showAlert('설정 메뉴는 관리자만 접근 가능합니다!');
         return;
     }
+    
+    console.log('✅ 설정 접근 허용 - openSettingsDialog 호출');
     openSettingsDialog();
 }
 
 function openSettingsDialog() {
+    console.log('🔧 설정 모달 열기 - 현재 사용자:', currentUser);
+    
     document.getElementById('clubNameInput').value = settings.clubName || '';
     document.getElementById('feePreset1').value = settings.feePresets[0] || '';
     document.getElementById('feePreset2').value = settings.feePresets[1] || '';
     document.getElementById('feePreset3').value = settings.feePresets[2] || '';
     document.getElementById('feePreset4').value = settings.feePresets[3] || '';
     document.getElementById('feePreset5').value = settings.feePresets[4] || '';
-    document.getElementById('adminUsername').value = settings.adminUser.username || '';
-    document.getElementById('adminPassword').value = ''; // 보안상 비밀번호는 표시하지 않음
 
     document.getElementById('coachName1').value = settings.coaches[0] || '';
     document.getElementById('coachName2').value = settings.coaches[1] || '';
@@ -27,73 +35,248 @@ function openSettingsDialog() {
         document.getElementById('accountNumber').value = settings.bankAccount.accountNumber || '';
     }
 
-    renderSubAdminsList();
+    // 관리자/부관리자 목록 로드 및 표시
+    loadAdminsList();
+
     document.getElementById('settingsModal').classList.add('active');
+    console.log('✅ 설정 모달 표시 완료');
+}
+
+// 관리자/부관리자 목록 로드
+function loadAdminsList() {
+    firebaseDb.ref('admins').once('value', (snapshot) => {
+        const adminsData = snapshot.val();
+        renderAdminsList(adminsData);
+    });
+}
+
+// 관리자/부관리자 목록 렌더링
+function renderAdminsList(adminsData) {
+    const adminListContainer = document.getElementById('adminAccountsList');
+    if (!adminListContainer) {
+        console.error('❌ adminAccountsList 요소를 찾을 수 없습니다');
+        return;
+    }
+    
+    adminListContainer.innerHTML = '';
+    
+    if (!adminsData) {
+        adminListContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">등록된 관리자가 없습니다</div>';
+        return;
+    }
+    
+    const admins = [];
+    const subAdmins = [];
+    
+    // 역할별로 분류
+    Object.keys(adminsData).forEach(uid => {
+        const admin = adminsData[uid];
+        const item = {
+            uid: uid,
+            email: admin.email || 'Unknown',
+            role: admin.role || 'unknown'
+        };
+        
+        if (admin.role === 'admin') {
+            admins.push(item);
+        } else if (admin.role === 'sub_admin') {
+            subAdmins.push(item);
+        }
+    });
+    
+    // 관리자 섹션
+    if (admins.length > 0) {
+        adminListContainer.innerHTML += '<div style="margin-bottom: 10px;">' +
+            '<h4 style="color: #FF9800; margin-bottom: 5px;">👑 관리자</h4>';
+        
+        admins.forEach(admin => {
+            const isCurrentUser = admin.uid === currentUser.id;
+            const deleteBtn = isCurrentUser 
+                ? '<span style="color: #999; font-size: 12px;">(현재 로그인)</span>'
+                : '<button onclick="removeAdmin(\'' + admin.uid + '\')" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer;">삭제</button>';
+            
+            adminListContainer.innerHTML += '<div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #fff3e0; border-radius: 8px; align-items: center;">' +
+                '<div style="flex: 1;">' +
+                    '<div style="font-weight: 600; color: #FF9800;">' + admin.email + '</div>' +
+                    '<div style="font-size: 12px; color: #666;">UID: ' + admin.uid.substring(0, 8) + '...</div>' +
+                '</div>' +
+                deleteBtn +
+            '</div>';
+        });
+        
+        adminListContainer.innerHTML += '</div>';
+    }
+    
+    // 부관리자 섹션
+    if (subAdmins.length > 0) {
+        adminListContainer.innerHTML += '<div style="margin-bottom: 10px;">' +
+            '<h4 style="color: #2196F3; margin-bottom: 5px;">🔰 부관리자</h4>';
+        
+        subAdmins.forEach(admin => {
+            adminListContainer.innerHTML += '<div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px; align-items: center;">' +
+                '<div style="flex: 1;">' +
+                    '<div style="font-weight: 600; color: #2196F3;">' + admin.email.substring(0, 16) + '...</div>' +
+                    '<div style="font-size: 12px; color: #666;">UID: ' + admin.uid.substring(0, 8) + '...</div>' +
+                '</div>' +
+                '<button onclick="removeAdmin(\'' + admin.uid + '\')" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer;">삭제</button>' +
+            '</div>';
+        });
+        
+        adminListContainer.innerHTML += '</div>';
+    }
+    
+    if (admins.length === 0 && subAdmins.length === 0) {
+        adminListContainer.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">등록된 관리자가 없습니다</div>';
+    }
+}
+
+// 새 관리자 추가 모달 열기
+function openAddAdminModal() {
+    const modal = document.createElement('div');
+    modal.id = 'addAdminModal';
+    modal.className = 'modal active';
+    modal.style.zIndex = '10005';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>➕ 새 관리자 계정 생성</h2>
+                <button class="close-btn" onclick="closeAddAdminModal()">×</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <div class="form-group">
+                    <label for="newAdminEmail">이메일</label>
+                    <input type="email" id="newAdminEmail" placeholder="admin@example.com" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="newAdminPassword">비밀번호</label>
+                    <input type="password" id="newAdminPassword" placeholder="6자 이상 입력" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">※ 최소 6자 이상이어야 합니다</div>
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>역할</label>
+                    <div style="display: flex; gap: 10px; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="radio" name="newAdminRole" value="admin" checked>
+                            <span>👑 관리자</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="radio" name="newAdminRole" value="sub_admin">
+                            <span>🔰 부관리자</span>
+                        </label>
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 8px;">
+                        • 관리자: 모든 권한 (설정 변경 가능)<br>
+                        • 부관리자: 회원 관리 및 레슨 체크 가능
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button style="background: #2196F3;" onclick="createNewAdmin()">계정 생성</button>
+                <button style="background: #9E9E9E;" onclick="closeAddAdminModal()">취소</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeAddAdminModal() {
+    const modal = document.getElementById('addAdminModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// 새 관리자 계정 생성
+function createNewAdmin() {
+    const email = document.getElementById('newAdminEmail').value.trim();
+    const password = document.getElementById('newAdminPassword').value;
+    const role = document.querySelector('input[name="newAdminRole"]:checked').value;
+    
+    if (!email || !password) {
+        showAlert('이메일과 비밀번호를 입력해주세요!');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showAlert('비밀번호는 최소 6자 이상이어야 합니다!');
+        return;
+    }
+    
+    console.log('🔧 새 관리자 계정 생성 시작:', email, role);
+    
+    // Firebase Authentication에 새 계정 생성
+    firebaseAuth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            console.log('✅ Firebase Auth 계정 생성 성공:', user.uid);
+            
+            // Realtime Database에 역할 저장
+            return firebaseDb.ref('admins/' + user.uid).set({
+                email: email,
+                role: role,
+                createdAt: new Date().toISOString()
+            });
+        })
+        .then(() => {
+            console.log('✅ 역할 저장 완료');
+            
+            // 생성된 계정으로 자동 로그인되므로 다시 원래 계정으로 로그인
+            return firebaseAuth.signInWithEmailAndPassword(currentUser.username, 'temp');
+        })
+        .catch((signInError) => {
+            // 원래 계정으로 재로그인 실패는 무시 (이미 로그인 상태일 수 있음)
+            console.log('ℹ️ 재로그인 시도:', signInError.message);
+        })
+        .finally(() => {
+            closeAddAdminModal();
+            loadAdminsList();
+            const roleText = role === 'admin' ? '관리자' : '부관리자';
+            showAlert('새 ' + roleText + ' 계정이 생성되었습니다!\n\n이메일: ' + email + '\n\n해당 계정으로 로그인할 수 있습니다.');
+        })
+        .catch((error) => {
+            console.error('❌ 계정 생성 실패:', error);
+            
+            let errorMessage = '계정 생성에 실패했습니다.';
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = '이미 사용 중인 이메일입니다.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = '올바른 이메일 형식이 아닙니다.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = '비밀번호가 너무 약합니다. 최소 6자 이상 입력해주세요.';
+            }
+            
+            showAlert(errorMessage);
+        });
+}
+
+// 관리자 삭제
+function removeAdmin(uid) {
+    // 현재 로그인한 사용자는 삭제 불가
+    if (uid === currentUser.id) {
+        showAlert('현재 로그인한 계정은 삭제할 수 없습니다!');
+        return;
+    }
+    
+    // 확인 모달
+    showConfirm(
+        '이 관리자 계정의 권한을 제거하시겠습니까?\n\n※ Firebase Authentication 계정은 삭제되지 않으며,\n관리자 권한만 제거됩니다.',
+        function() {
+            firebaseDb.ref('admins/' + uid).remove()
+                .then(() => {
+                    console.log('✅ 관리자 삭제 완료:', uid);
+                    loadAdminsList();
+                    showAlert('관리자 권한이 제거되었습니다.');
+                })
+                .catch((error) => {
+                    console.error('❌ 관리자 삭제 실패:', error);
+                    showAlert('삭제에 실패했습니다: ' + error.message);
+                });
+        }
+    );
 }
 
 function closeSettings() {
     document.getElementById('settingsModal').classList.remove('active');
-}
-
-// 부관리자 목록 렌더링
-function renderSubAdminsList() {
-    const container = document.getElementById('subAdminsList');
-    const subAdmins = settings.subAdmins || [];
-    
-    if (subAdmins.length === 0) {
-        container.innerHTML = '<div style="padding: 10px; text-align: center; color: #999;">등록된 부관리자가 없습니다</div>';
-        return;
-    }
-    
-    container.innerHTML = subAdmins.map((sa, index) => `
-        <div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; align-items: center;">
-            <div style="flex: 1;">
-                <div style="font-weight: 600; color: #2196F3;">🔰 ${sa.username}</div>
-                <div style="font-size: 12px; color: #666;">비밀번호: ••••••</div>
-            </div>
-            <button onclick="removeSubAdmin(${index})" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                삭제
-            </button>
-        </div>
-    `).join('');
-}
-
-// 부관리자 추가
-function addSubAdmin() {
-    const username = prompt('부관리자 아이디를 입력하세요:');
-    if (!username || username.trim() === '') return;
-    
-    const password = prompt('부관리자 비밀번호를 입력하세요:');
-    if (!password || password.trim() === '') return;
-    
-    // 중복 확인
-    if (settings.adminUser.username === username) {
-        showAlert('관리자 아이디와 동일할 수 없습니다!');
-        return;
-    }
-    
-    if (settings.subAdmins.some(sa => sa.username === username)) {
-        showAlert('이미 존재하는 아이디입니다!');
-        return;
-    }
-    
-    settings.subAdmins.push({
-        id: Date.now().toString(),
-        username: username.trim(),
-        password: password.trim()
-    });
-    
-    renderSubAdminsList();
-    showAlert('부관리자가 추가되었습니다!');
-}
-
-// 부관리자 삭제
-function removeSubAdmin(index) {
-    if (confirm('이 부관리자를 삭제하시겠습니까?')) {
-        settings.subAdmins.splice(index, 1);
-        renderSubAdminsList();
-        showAlert('부관리자가 삭제되었습니다!');
-    }
 }
 
 function saveSettings() {
@@ -113,16 +296,6 @@ function saveSettings() {
         parseInt(document.getElementById('feePreset4').value) || 0,
         parseInt(document.getElementById('feePreset5').value) || 0
     ];
-
-    const newUsername = document.getElementById('adminUsername').value.trim();
-    const newPassword = document.getElementById('adminPassword').value;
-    
-    if (newUsername) {
-        settings.adminUser.username = newUsername;
-    }
-    if (newPassword) {
-        settings.adminUser.password = newPassword;
-    }
     
     // 계좌번호 설정 저장
     settings.bankAccount = {

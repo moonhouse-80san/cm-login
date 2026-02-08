@@ -96,5 +96,9 @@
 	member.js
 	modal.js
 	
-
-	
+	[사항2]
+	- 보안 인증 추가 / 이메일 로그인 적용
+	index.html
+	base.js
+	login.js
+	settings.js	
