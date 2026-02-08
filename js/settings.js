@@ -50,23 +50,6 @@ function loadAdminsList() {
     });
 }
 
-// 아이디를 내부 이메일 형식으로 변환
-function convertToInternalEmail(username) {
-    if (username.includes('@')) {
-        return username;
-    }
-    return username + '@clubapp.internal';
-}
-
-// 내부 이메일을 아이디로 변환
-function convertToUsername(email) {
-    if (!email) return '';
-    if (email.endsWith('@clubapp.internal')) {
-        return email.replace('@clubapp.internal', '');
-    }
-    return email;
-}
-
 // 관리자/부관리자 목록 렌더링
 function renderAdminsList(adminsData) {
     const adminListContainer = document.getElementById('adminAccountsList');
@@ -88,13 +71,9 @@ function renderAdminsList(adminsData) {
     // 역할별로 분류
     Object.keys(adminsData).forEach(uid => {
         const admin = adminsData[uid];
-        const email = admin.email || 'Unknown';
-        const username = convertToUsername(email);  // 이메일을 아이디로 변환
-        
         const item = {
             uid: uid,
-            email: email,
-            username: username,  // 표시용 아이디
+            email: admin.email || 'Unknown',
             role: admin.role || 'unknown'
         };
         
@@ -118,7 +97,7 @@ function renderAdminsList(adminsData) {
             
             adminListContainer.innerHTML += '<div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #fff3e0; border-radius: 8px; align-items: center;">' +
                 '<div style="flex: 1;">' +
-                    '<div style="font-weight: 600; color: #FF9800;">👤 ' + admin.username + '</div>' +
+                    '<div style="font-weight: 600; color: #FF9800;">' + admin.email + '</div>' +
                     '<div style="font-size: 12px; color: #666;">UID: ' + admin.uid.substring(0, 8) + '...</div>' +
                 '</div>' +
                 deleteBtn +
@@ -136,7 +115,7 @@ function renderAdminsList(adminsData) {
         subAdmins.forEach(admin => {
             adminListContainer.innerHTML += '<div style="display: flex; gap: 10px; margin-bottom: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px; align-items: center;">' +
                 '<div style="flex: 1;">' +
-                    '<div style="font-weight: 600; color: #2196F3;">👤 ' + admin.username + '</div>' +
+                    '<div style="font-weight: 600; color: #2196F3;">' + admin.email.substring(0, 16) + '...</div>' +
                     '<div style="font-size: 12px; color: #666;">UID: ' + admin.uid.substring(0, 8) + '...</div>' +
                 '</div>' +
                 '<button onclick="removeAdmin(\'' + admin.uid + '\')" style="padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer;">삭제</button>' +
@@ -165,9 +144,8 @@ function openAddAdminModal() {
             </div>
             <div style="padding: 20px 0;">
                 <div class="form-group">
-                    <label for="newAdminUsername">아이디</label>
-                    <input type="text" id="newAdminUsername" placeholder="admin, coach1 등" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                    <div style="font-size: 12px; color: #666; margin-top: 5px;">※ 간단한 아이디를 입력하세요 (이메일 형식 불필요)</div>
+                    <label for="newAdminEmail">이메일</label>
+                    <input type="email" id="newAdminEmail" placeholder="admin@example.com" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
                 </div>
                 <div class="form-group" style="margin-top: 15px;">
                     <label for="newAdminPassword">비밀번호</label>
@@ -204,109 +182,6 @@ function openAddAdminModal() {
 function closeAddAdminModal() {
     const modal = document.getElementById('addAdminModal');
     if (modal) {
-        modal.remove();
-    }
-}
-
-// 새 관리자 계정 생성
-function createNewAdmin() {
-    const usernameInput = document.getElementById('newAdminUsername').value.trim();
-    const password = document.getElementById('newAdminPassword').value;
-    const role = document.querySelector('input[name="newAdminRole"]:checked').value;
-    
-    if (!usernameInput || !password) {
-        showAlert('아이디와 비밀번호를 입력해주세요!');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showAlert('비밀번호는 최소 6자 이상이어야 합니다!');
-        return;
-    }
-    
-    // 아이디를 이메일 형식으로 변환
-    const email = convertToInternalEmail(usernameInput);
-    
-    console.log('🔧 새 관리자 계정 생성 시작');
-    console.log('  - 입력된 아이디:', usernameInput);
-    console.log('  - 변환된 이메일:', email);
-    console.log('  - 역할:', role);
-    
-    // Firebase Authentication에 새 계정 생성
-    firebaseAuth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            console.log('✅ Firebase Auth 계정 생성 성공:', user.uid);
-            
-            // Realtime Database에 역할과 원본 아이디 저장
-            return firebaseDb.ref('admins/' + user.uid).set({
-                email: email,
-                username: usernameInput,  // 원본 아이디 저장
-                role: role,
-                createdAt: new Date().toISOString()
-            });
-        })
-        .then(() => {
-            console.log('✅ 역할 저장 완료');
-            
-            // 생성된 계정으로 자동 로그인되므로 다시 원래 계정으로 로그인
-            // (현재 사용자의 이메일 정보가 있다면)
-            if (currentUser.email) {
-                return firebaseAuth.signInWithEmailAndPassword(currentUser.email, 'temp');
-            }
-        })
-        .catch((signInError) => {
-            // 원래 계정으로 재로그인 실패는 무시 (이미 로그인 상태일 수 있음)
-            console.log('ℹ️ 재로그인 시도:', signInError.message);
-        })
-        .finally(() => {
-            closeAddAdminModal();
-            loadAdminsList();
-            const roleText = role === 'admin' ? '관리자' : '부관리자';
-            showAlert('새 ' + roleText + ' 계정이 생성되었습니다!\n\n아이디: ' + usernameInput + '\n\n해당 계정으로 로그인할 수 있습니다.');
-        })
-        .catch((error) => {
-            console.error('❌ 계정 생성 실패:', error);
-            
-            let errorMessage = '계정 생성에 실패했습니다.';
-            if (error.code === 'auth/email-already-in-use') {
-                errorMessage = '이미 사용 중인 아이디입니다.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = '올바른 아이디 형식이 아닙니다.';
-            } else if (error.code === 'auth/weak-password') {
-                errorMessage = '비밀번호가 너무 약합니다. 최소 6자 이상 입력해주세요.';
-            }
-            
-            showAlert(errorMessage);
-        });
-}
-
-// 관리자 삭제
-function removeAdmin(uid) {
-    // 현재 로그인한 사용자는 삭제 불가
-    if (uid === currentUser.id) {
-        showAlert('현재 로그인한 계정은 삭제할 수 없습니다!');
-        return;
-    }
-    
-    // 확인 모달
-    showConfirm(
-        '이 관리자 계정의 권한을 제거하시겠습니까?\n\n※ Firebase Authentication 계정은 삭제되지 않으며,\n관리자 권한만 제거됩니다.',
-        function() {
-            firebaseDb.ref('admins/' + uid).remove()
-                .then(() => {
-                    console.log('✅ 관리자 삭제 완료:', uid);
-                    loadAdminsList();
-                    showAlert('관리자 권한이 제거되었습니다.');
-                })
-                .catch((error) => {
-                    console.error('❌ 관리자 삭제 실패:', error);
-                    showAlert('삭제에 실패했습니다: ' + error.message);
-                });
-        }
-    );
-}
-
         modal.remove();
     }
 }
