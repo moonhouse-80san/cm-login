@@ -745,7 +745,7 @@ function editMember(index) {
 	setTimeout(() => {
 		const nameInput = document.getElementById('name');
 		if (nameInput) {
-			nameInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			nameInput.scrollIntoView({  top: -30, behavior: 'smooth'  });
 			
 			// 포커스 및 선택
 			setTimeout(() => {
