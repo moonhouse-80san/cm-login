@@ -1,0 +1,83 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..5fcceee71e0a2bd6ebb89596d2fa411ecaeff35b
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,73 @@
++# 회원 관리 앱 구조 및 기본 기능
++
++이 문서는 현재 회원 관리 앱의 **구조(파일/모듈)**와 **기본 기능**을 빠르게 이해할 수 있도록 정리한 안내서입니다.
++
++## 1) 프로젝트 구조
++
++```
++cm-login/
++├─ index.html              # 앱의 기본 화면/레이아웃
++├─ css/                    # 화면 스타일
++│  ├─ base.css             # 공통 스타일
++│  ├─ login.css            # 로그인/권한 UI
++│  ├─ member.css           # 회원 목록/상세 UI
++│  ├─ schedule.css         # 스케줄 UI
++│  ├─ calendar.css         # 캘린더 UI
++│  ├─ coach.css            # 코치 UI
++│  └─ responsive.css       # 반응형 스타일
++├─ js/                     # 기능 스크립트
++│  ├─ base.js              # Firebase 초기화/전역 상태
++│  ├─ login.js             # 로그인/권한 처리
++│  ├─ member.js            # 회원 목록/정렬/검색
++│  ├─ form.js              # 회원 등록/수정 폼
++│  ├─ schedule.js          # 스케줄 렌더링
++│  ├─ calendar.js          # 캘린더 로직
++│  ├─ coach.js             # 코치 버튼/필터
++│  ├─ settings.js          # 설정/관리자 관리
++│  └─ modal.js             # 알림/확인 모달
++├─ etc/
++│  └─ manifest.json        # PWA 매니페스트
++└─ sw.js                   # 서비스 워커 (오프라인 캐시)
++```
++
++## 2) 기본 기능
++
++### ✅ 로그인/권한
++- 관리자/부관리자/게스트 권한으로 UI를 제어합니다.
++- Firebase Auth를 사용해 로그인 상태를 유지합니다.
++
++### ✅ 회원 관리
++- 회원 등록/수정/삭제 및 목록 표시
++- 이름/전화번호 검색
++- 등록일순/이름순/코치별 정렬
++
++### ✅ 레슨/스케줄
++- 회원별 레슨 목표/현재 횟수 관리
++- 주간 스케줄 표시
++- 캘린더 기반 레슨 관리 UI
++
++### ✅ 회비/입금
++- 월회비 입력 및 프리셋 제공
++- 입금 내역 추가/표시
++
++### ✅ 설정
++- 구장명/회비 프리셋/코치 목록 관리
++- 관리자/부관리자 계정 관리
++- 계좌 정보 설정
++
++## 3) 데이터 흐름 요약
++
++- **Firebase Realtime Database**에 `members`, `settings`, `admins` 데이터를 저장합니다.
++- 앱 로드 시 `base.js`에서 데이터 로드 → 화면 렌더링.
++- 폼/버튼 이벤트로 데이터 변경 → Firebase에 저장 → 변경 감지 후 UI 갱신.
++
++## 4) 빠른 실행 안내
++
++로컬에서 정적 서버로 실행하면 됩니다.
++
++```bash
++# 예시: Python 간단 서버
++python -m http.server 8080
++```
++
++브라우저에서 `http://localhost:8080`으로 접속하세요.
+ 
+EOF
+)
