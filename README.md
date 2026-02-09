@@ -55,7 +55,7 @@ cm-login/
 - 관리자/부관리자 계정 관리
 - 계좌 정보 설정
 
-파일별 주요 기능을 정리한 상세 설명
+# 파일별 주요 기능을 정리한 상세 설명
 
 - **Firebase Realtime Database**에 `members`, `settings`, `admins` 데이터를 저장합니다.
 - 앱 로드 시 `base.js`에서 데이터 로드 → 화면 렌더링.
