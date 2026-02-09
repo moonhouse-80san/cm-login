@@ -1,10 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/README.md b/README.md
-new file mode 100644
-index 0000000000000000000000000000000000000000..5fcceee71e0a2bd6ebb89596d2fa411ecaeff35b
---- /dev/null
-+++ b/README.md
-@@ -0,0 +1,73 @@
 +# 회원 관리 앱 구조 및 기본 기능
 +
 +이 문서는 현재 회원 관리 앱의 **구조(파일/모듈)**와 **기본 기능**을 빠르게 이해할 수 있도록 정리한 안내서입니다.
