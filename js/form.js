@@ -407,19 +407,23 @@ function editMember(index) {
     isPhotoRemoved = false;
     currentEditIndex = index;
     
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    setTimeout(() => {
-        const nameInput = document.getElementById('name');
-        if (nameInput) {
-            nameInput.setAttribute('readonly', 'readonly');
-            nameInput.focus();
-            nameInput.select();
-            setTimeout(() => {
-                nameInput.removeAttribute('readonly');
-            }, 100);
-        }
-    }, 300);
+	// 이름 입력란으로 스크롤 (화면 중앙에 배치)
+	setTimeout(() => {
+		const nameInput = document.getElementById('name');
+		if (nameInput) {
+			nameInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			
+			// 포커스 및 선택
+			setTimeout(() => {
+				nameInput.setAttribute('readonly', 'readonly');
+				nameInput.focus();
+				nameInput.select();
+				setTimeout(() => {
+					nameInput.removeAttribute('readonly');
+				}, 100);
+			}, 300);
+		}
+	}, 100);
 }
 
 // 폼 초기화
