@@ -101,4 +101,10 @@
 	index.html
 	base.js
 	login.js
-	settings.js	
+	settings.js
+	
+	[사항3]
+	- 이메일 형식이 필요 없는 로그인(이메일 형식을 자동으로 입력함)
+	index.html
+	login.js
+	settings.js
