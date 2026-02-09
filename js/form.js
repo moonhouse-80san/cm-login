@@ -184,13 +184,15 @@ function addMember() {
     renderMembers();
     renderSchedule();
     
-    // SMS 발송 여부 확인
-    if (member.phone) {
-        const sendSMS = confirm(`${member.name} 회원님께 환영 문자를 발송하시겠습니까?`);
-        if (sendSMS) {
-            sendWelcomeSMS(member.name, member.phone);
-        }
-    }
+	// SMS 발송 여부 확인
+	if (member.phone) {
+		showConfirm(
+			`${member.name} 회원님께 환영 문자를 발송하시겠습니까?`,
+			function() {
+				sendWelcomeSMS(member.name, member.phone);
+			}
+		);
+	}
     
     clearForm();
     
