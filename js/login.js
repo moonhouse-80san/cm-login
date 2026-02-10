@@ -281,6 +281,17 @@ function updateUIByRole() {
             }
         }
     }
+
+    // 입금 통계 섹션 표시/숨김 - 관리자/부관리자만 접근 가능
+    const reportSection = document.getElementById('reportSection');
+    if (reportSection) {
+        // 관리자 또는 부관리자일 때만 표시, 비로그인은 완전히 숨김
+        if (role === USER_ROLES.ADMIN || role === USER_ROLES.SUB_ADMIN) {
+            reportSection.style.display = 'block';
+        } else {
+            reportSection.style.display = 'none';
+        }
+    }
     
     // 동기화 버튼 표시/숨김 (로그인 시에만 표시)
     if (syncStatus) {
