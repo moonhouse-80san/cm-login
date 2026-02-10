@@ -104,6 +104,17 @@ function safeParseInt(value) {
 
 // 회원 추가
 function addMember() {
+    // 권한 체크 - 로그인된 사용자만 회원 추가 가능
+    if (!hasEditPermission()) {
+        showAlert('회원 추가 권한이 없습니다. 로그인해주세요!');
+        openLoginModal();
+        return;
+    }
+    
+    console.log('🔍 회원 추가 시작');
+    console.log('현재 사용자:', currentUser);
+    console.log('hasEditPermission():', hasEditPermission());
+    
     const name = document.getElementById('name').value.trim();
     
     if (!name) {
@@ -118,7 +129,23 @@ function addMember() {
     const fee = safeParseInt(feeValue);
     const email = document.getElementById('email').value.trim();
     const address = document.getElementById('address').value.trim();
-    const coach = getSelectedCoach();
+    let coach = getSelectedCoach();
+    
+    // 부관리자인 경우 자동으로 자신의 코치명 할당
+    if (currentUser.role === USER_ROLES.SUB_ADMIN) {
+        const myCoachName = (currentUser.username || '').trim();
+        console.log('🔰 부관리자 감지:', myCoachName);
+        console.log('등록된 코치 목록:', settings.coaches);
+        
+        if (myCoachName && settings.coaches.includes(myCoachName)) {
+            coach = myCoachName;
+            console.log('✅ 부관리자 자동 코치 할당:', coach);
+            // UI에도 반영
+            setSelectedCoach(coach);
+        } else {
+            console.warn('⚠️ 부관리자 이름이 코치 목록에 없음');
+        }
+    }
     
     const gender = getSelectedGender();
     const birthYear = document.getElementById('birthYear').value ? parseInt(document.getElementById('birthYear').value) : null;
@@ -177,6 +204,8 @@ function addMember() {
         etc: etc,
         privateMemo: privateMemo
     };
+
+    console.log('✅ 회원 데이터 생성 완료:', member);
 
     members.push(member);
     saveToFirebase();
@@ -239,7 +268,12 @@ function updateMember() {
     const fee = safeParseInt(feeValue);
     const email = document.getElementById('email').value.trim();
     const address = document.getElementById('address').value.trim();
-    const coach = getSelectedCoach();
+    let coach = getSelectedCoach();
+    
+    // 부관리자인 경우 코치 변경 불가 (자신의 회원만 수정 가능하므로)
+    if (currentUser.role === USER_ROLES.SUB_ADMIN) {
+        coach = currentUser.username || coach;
+    }
     
     const gender = getSelectedGender();
     const birthYear = document.getElementById('birthYear').value ? parseInt(document.getElementById('birthYear').value) : null;
@@ -366,11 +400,11 @@ function editMember(index) {
     currentCountInput.value = member.currentCount || 0;
     
     if (canEditMember(member)) {
-        currentCountInput.removeAttribute('readonly');␊
-        currentCountInput.style.background = '#ffffff';␊
-    } else {␊
-        currentCountInput.setAttribute('readonly', true);␊
-        currentCountInput.style.background = '#f0f0f0';␊
+        currentCountInput.removeAttribute('readonly');
+        currentCountInput.style.background = '#ffffff';
+    } else {
+        currentCountInput.setAttribute('readonly', true);
+        currentCountInput.style.background = '#f0f0f0';
     }
     
     document.getElementById("targetCount").value = member.targetCount || 0;
@@ -386,7 +420,7 @@ function editMember(index) {
     if (canEditMember(member)) {
         privateMemoSection.style.display = 'block';
         privateMemoInput.value = member.privateMemo || '';
-    } else 
+    } else {
         privateMemoSection.style.display = 'none';
         privateMemoInput.value = '';
     }

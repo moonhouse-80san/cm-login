@@ -313,7 +313,7 @@ function selectDate(year, month, date) {
 
 function showAttendanceSelectModal() {
     const modal = document.getElementById('attendanceSelectModal');
-    const list = document.getElementById('memberSelectList');␊
+    const list = document.getElementById('memberSelectList');
     const searchInput = document.getElementById('attendanceSearchInput');
     
     if (searchInput) {
@@ -386,7 +386,7 @@ function filterAttendanceMembers() {
     let validMembers = members.filter(member => {
         const targetCount = member.targetCount || 0;
         return targetCount > 0 && canEditMember(member);
-    });␊
+    });
     
     if (searchTerm) {
         validMembers = validMembers.filter(member => 
