@@ -437,8 +437,8 @@ function exportData() {
             ['월회비 기본값3', settings.feePresets[2] || 0],
             ['월회비 기본값4', settings.feePresets[3] || 0],
             ['월회비 기본값5', settings.feePresets[4] || 0],
-            ['은행명', settings.bankAccount?.bank || ''],
-            ['계좌번호', settings.bankAccount?.accountNumber || '']
+            ['은행명', (settings.bankAccount && settings.bankAccount.bank) || ''],
+            ['계좌번호', (settings.bankAccount && settings.bankAccount.accountNumber) || '']
         ];
         
         const wsSettings = XLSX.utils.aoa_to_sheet(settingsData);

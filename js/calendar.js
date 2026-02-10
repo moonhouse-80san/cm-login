@@ -48,8 +48,9 @@ function sendWelcomeSMS(memberName, memberPhone) {
     
     const phoneNumber = String(memberPhone).replace(/-/g, '');
     const clubName = settings.clubName || '탁구클럽';
-    const bank = settings.bankAccount?.bank || '';
-    const accountNumber = settings.bankAccount?.accountNumber || '';
+    const bankAccount = settings.bankAccount || {};
+    const bank = bankAccount.bank || '';
+    const accountNumber = bankAccount.accountNumber || '';
     
 	let message =
 		memberName + '님 회원이 되신 것을 축하드립니다. ' +
@@ -102,8 +103,9 @@ function sendAttendanceCompleteSMS(memberName, memberPhone, targetCount) {
     
     const phoneNumber = String(memberPhone).replace(/-/g, '');
     const clubName = settings.clubName || '탁구클럽';
-    const bank = settings.bankAccount?.bank || '';
-    const accountNumber = settings.bankAccount?.accountNumber || '';
+    const bankAccount = settings.bankAccount || {};
+    const bank = bankAccount.bank || '';
+    const accountNumber = bankAccount.accountNumber || '';
     
 	let message =
 		memberName + '회원님 레슨 완료. ' +
@@ -322,13 +324,17 @@ function showAttendanceSelectModal() {
     
     list.innerHTML = '';
 
-    const validMembers = members.filter(member => {
+    const membersWithTarget = members.filter(member => {
         const targetCount = member.targetCount || 0;
         return targetCount > 0;
     });
+    const validMembers = membersWithTarget.filter(member => canEditMember(member));
 
     if (validMembers.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">목표 레슨 횟수가 설정된 회원이 없습니다.<br>회원 정보에서 목표 레슨 횟수를 설정해주세요.</p>';
+        const emptyMessage = membersWithTarget.length > 0
+            ? '담당하는 회원이 없습니다.'
+            : '목표 레슨 횟수가 설정된 회원이 없습니다.<br>회원 정보에서 목표 레슨 횟수를 설정해주세요.';
+        list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">' + emptyMessage + '</p>';
         modal.classList.add('active');
         return;
     }
@@ -381,7 +387,7 @@ function filterAttendanceMembers() {
     
     let validMembers = members.filter(member => {
         const targetCount = member.targetCount || 0;
-        return targetCount > 0;
+        return targetCount > 0 && canEditMember(member);
     });
     
     if (searchTerm) {
@@ -400,6 +406,10 @@ function closeAttendanceSelectModal() {
 }
 
 function toggleAttendance(memberIndex) {
+    if (!canEditMemberByIndex(memberIndex)) {
+        showAlert('이 회원의 레슨을 체크할 권한이 없습니다.');
+        return;
+    }
     const member = members[memberIndex];
 
     if (!member.attendanceDates) {

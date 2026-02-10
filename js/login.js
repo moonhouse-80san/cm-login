@@ -35,6 +35,23 @@ function convertToUsername(email) {
     return email;
 }
 
+function normalizeRole(role) {
+    if (!role) {
+        return USER_ROLES.GUEST;
+    }
+    const normalized = String(role).trim().toLowerCase();
+    if (Object.values(USER_ROLES).includes(normalized)) {
+        return normalized;
+    }
+    if (normalized === '관리자' || normalized === 'admin' || normalized === 'administrator') {
+        return USER_ROLES.ADMIN;
+    }
+    if (normalized === '부관리자' || normalized === 'sub admin' || normalized === 'sub_admin') {
+        return USER_ROLES.SUB_ADMIN;
+    }
+    return USER_ROLES.GUEST;
+}
+
 // 로그인 상태 초기화
 function initializeLoginSystem() {
     // Firebase Auth 상태 변경 리스너
@@ -53,9 +70,10 @@ function initializeLoginSystem() {
                             // 역할이 있는 경우
                             // 이메일을 아이디로 변환하여 표시
                             const displayUsername = convertToUsername(user.email);
+                            const role = normalizeRole(adminData.role);
                             
                             currentUser = {
-                                role: adminData.role, // 'admin' 또는 'sub_admin'
+                                role: role, // 'admin' 또는 'sub_admin'
                                 username: displayUsername,  // 아이디로 표시
                                 email: user.email,  // 실제 이메일 보관
                                 id: user.uid
@@ -143,7 +161,7 @@ function login() {
             
             if (adminData && adminData.role) {
                 // 역할이 있는 경우
-                const role = adminData.role;
+                const role = normalizeRole(adminData.role);
                 const roleText = role === 'admin' ? '관리자' : '부관리자';
                 
                 // 이메일을 아이디로 변환하여 표시
@@ -377,6 +395,29 @@ function hasEditPermission() {
     return result;
 }
 
+function canEditMember(member) {
+    if (!member) {
+        return false;
+    }
+
+    if (currentUser.role === USER_ROLES.ADMIN) {
+        return true;
+    }
+
+    if (currentUser.role === USER_ROLES.SUB_ADMIN) {
+        const coachName = (currentUser.username || '').trim();
+        const canEdit = coachName !== '' && member.coach === coachName;
+        console.log('✅ canEditMember (sub_admin):', canEdit, 'coach:', member.coach, 'user:', coachName);
+        return canEdit;
+    }
+
+    return false;
+}
+
+function canEditMemberByIndex(index) {
+    return canEditMember(members[index]);
+}
+
 function hasSettingsPermission() {
     const result = currentUser.role === USER_ROLES.ADMIN;
     console.log('✅ hasSettingsPermission:', result, '현재 역할:', currentUser.role);
@@ -405,6 +446,10 @@ function checkPermissionBeforeDelete(index) {
     if (!hasEditPermission()) {
         showAlert('삭제 권한이 없습니다. 로그인해주세요!');
         openLoginModal();
+        return false;
+    }
+    if (!canEditMemberByIndex(index)) {
+        showAlert('이 회원을 삭제할 권한이 없습니다.');
         return false;
     }
     showDeleteModal(index);

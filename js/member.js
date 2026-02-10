@@ -140,7 +140,7 @@ function renderMembers() {
             coachBadge = '<span class="coach-badge">🏋️ ' + member.coach + '</span>';
         }
 
-        const hasPermission = hasEditPermission();
+        const hasPermission = canEditMember(member);
         const editBtnClass = hasPermission ? 'btn-edit' : 'btn-edit btn-edit-disabled btn-hidden';
         const deleteBtnClass = hasPermission ? 'btn-delete' : 'btn-delete btn-delete-disabled btn-hidden';
 
@@ -255,7 +255,7 @@ function renderMembersByCoach() {
                 attendanceCount = '<span class="attendance-count" style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; background: #fff; color: #ff6600; border-radius: 2px; font-size: 14px; font-weight: 500; margin-left: 5px; white-space: nowrap;">📊 ' + currentCount + '/' + targetCount + '회</span>';
             }
 
-            const hasPermission = hasEditPermission();
+            const hasPermission = canEditMember(member);
             const editBtnClass = hasPermission ? 'btn-edit' : 'btn-edit btn-edit-disabled btn-hidden';
             const deleteBtnClass = hasPermission ? 'btn-delete' : 'btn-delete btn-delete-disabled btn-hidden';
 
@@ -346,7 +346,7 @@ function showMemberDetails(index) {
         detailsHTML += '<tr><td>⚤ 성별:</td><td>' + member.gender + '</td></tr>';
     }
     
-    if (hasEditPermission() && member.birthYear) {
+    if (canEditMember(member) && member.birthYear) {
         detailsHTML += '<tr><td>🎂 생년:</td><td>' + member.birthYear + '년생</td></tr>';
     }
     
@@ -368,7 +368,7 @@ function showMemberDetails(index) {
     
     detailsHTML += '</table></div>';
 
-    if (hasEditPermission() && member.privateMemo) {
+    if (canEditMember(member) && member.privateMemo) {
         detailsHTML += '<div class="member-details-section">' +
             '<h3>📝 비밀글 (관리자용)</h3>' +
             '<div class="etc-details" style="background: #fff8e1; border-left: 4px solid #FF9800;">' +
@@ -377,7 +377,7 @@ function showMemberDetails(index) {
         '</div>';
     }
     
-    if (hasEditPermission()) {
+    if (canEditMember(member)) {
         const payments = member.paymentHistory || [];
         if (payments.length > 0) {
             const sortedPayments = payments.slice().sort((a, b) => b.date.localeCompare(a.date));
@@ -477,7 +477,7 @@ function showMemberDetails(index) {
     detailsHTML += '</div>' +
         '<div class="member-details-footer">';
     
-    if (hasEditPermission()) {
+    if (canEditMember(member)) {
         detailsHTML += '<button class="btn btn-edit" onclick="editMember(' + index + '); closeMemberDetails();">수정</button>';
     }
     
@@ -590,6 +590,10 @@ function deleteAttendanceDate(memberIndex, date, type) {
         openLoginModal();
         return;
     }
+    if (!canEditMemberByIndex(memberIndex)) {
+        showAlert('이 회원의 레슨 기록을 수정할 권한이 없습니다.');
+        return;
+    }
     
     // confirm() 대신 showConfirm() 사용
     showConfirm(
@@ -639,6 +643,10 @@ function deleteAllAttendanceHistory(memberIndex) {
         openLoginModal();
         return;
     }
+    if (!canEditMemberByIndex(memberIndex)) {
+        showAlert('이 회원의 레슨 기록을 수정할 권한이 없습니다.');
+        return;
+    }
     
     // confirm() 대신 showConfirm() 사용
     showConfirm(
@@ -685,6 +693,10 @@ function closeMemberDetails() {
 }
 
 function editMember(index) {
+    if (!canEditMemberByIndex(index)) {
+        showAlert('이 회원을 수정할 권한이 없습니다.');
+        return;
+    }
     const member = members[index];
     
     const formSection = document.querySelector('.form-section');
@@ -709,7 +721,7 @@ function editMember(index) {
     
     const privateMemoSection = document.getElementById('privateMemoSection');
     const privateMemoInput = document.getElementById('privateMemo');
-    if (hasEditPermission()) {
+    if (canEditMember(member)) {
         privateMemoSection.style.display = 'block';
         privateMemoInput.value = member.privateMemo || '';
     } else {

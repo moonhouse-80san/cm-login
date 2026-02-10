@@ -5,6 +5,10 @@ function resetCurrentAttendance() {
         openLoginModal();
         return;
     }
+    if (!canEditMemberByIndex(currentEditIndex)) {
+        showAlert('이 회원의 레슨을 초기화할 권한이 없습니다.');
+        return;
+    }
 
     if (currentEditIndex === null) {
         showAlert('먼저 수정할 회원을 선택해주세요!');

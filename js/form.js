@@ -214,10 +214,16 @@ function addMember() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+window.addMember = addMember;
+
 // 회원 수정
 function updateMember() {
     if (currentEditIndex === null) {
         showAlert('수정할 회원을 선택해주세요!');
+        return;
+    }
+    if (!canEditMemberByIndex(currentEditIndex)) {
+        showAlert('이 회원을 수정할 권한이 없습니다.');
         return;
     }
 
@@ -341,6 +347,10 @@ function updateMember() {
 // 회원 편집 폼 채우기
 function editMember(index) {
     const member = members[index];
+    if (!canEditMember(member)) {
+        showAlert('이 회원을 수정할 권한이 없습니다.');
+        return;
+    }
     
     const formSection = document.querySelector('.form-section');
     if (formSection) {
@@ -357,7 +367,7 @@ function editMember(index) {
     const currentCountInput = document.getElementById("currentCount");
     currentCountInput.value = member.currentCount || 0;
     
-    if (hasEditPermission()) {
+    if (canEditMember(member)) {
         currentCountInput.removeAttribute('readonly');
         currentCountInput.style.background = '#ffffff';
     } else {
@@ -375,7 +385,7 @@ function editMember(index) {
     
     const privateMemoSection = document.getElementById('privateMemoSection');
     const privateMemoInput = document.getElementById('privateMemo');
-    if (hasEditPermission()) {
+    if (canEditMember(member)) {
         privateMemoSection.style.display = 'block';
         privateMemoInput.value = member.privateMemo || '';
     } else {
