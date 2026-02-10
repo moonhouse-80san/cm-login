@@ -505,85 +505,153 @@
 				<button class="close-btn" onclick="closeReportModal()">×</button>
 			</div>
 
+			<!-- 뷰 토글 (월별/년도별) -->
+			<div class="view-toggle-container">
+				<button class="view-toggle-btn active" data-view="monthly" onclick="switchReportView('monthly')">
+					📅 월별 리포트
+				</button>
+				<button class="view-toggle-btn" data-view="yearly" onclick="switchReportView('yearly')">
+					📈 년도별 리포트
+				</button>
+			</div>
+
 			<!-- 기간 선택 -->
 			<div class="report-period-selector">
 				<select id="reportYear">
 					<!-- JavaScript로 동적 생성 -->
 				</select>
-				<select id="reportMonth">
-					<option value="1">1월</option>
-					<option value="2">2월</option>
-					<option value="3">3월</option>
-					<option value="4">4월</option>
-					<option value="5">5월</option>
-					<option value="6">6월</option>
-					<option value="7">7월</option>
-					<option value="8">8월</option>
-					<option value="9">9월</option>
-					<option value="10">10월</option>
-					<option value="11">11월</option>
-					<option value="12">12월</option>
-				</select>
+				<div id="monthSelectContainer">
+					<select id="reportMonth">
+						<option value="1">1월</option>
+						<option value="2">2월</option>
+						<option value="3">3월</option>
+						<option value="4">4월</option>
+						<option value="5">5월</option>
+						<option value="6">6월</option>
+						<option value="7">7월</option>
+						<option value="8">8월</option>
+						<option value="9">9월</option>
+						<option value="10">10월</option>
+						<option value="11">11월</option>
+						<option value="12">12월</option>
+					</select>
+				</div>
 				<button onclick="changeReportPeriod()">조회</button>
 			</div>
 
-			<!-- 전체 통계 카드 -->
-			<div class="stats-cards">
-				<div class="stat-card green">
-					<div class="stat-card-label">💰 실제 수입</div>
-					<div class="stat-card-value" id="totalIncomeValue">0원</div>
+			<!-- 월별 리포트 섹션 -->
+			<div id="monthlyReportSection">
+				<!-- 전체 통계 카드 -->
+				<div class="stats-cards">
+					<div class="stat-card green">
+						<div class="stat-card-label">💰 실제 수입</div>
+						<div class="stat-card-value" id="totalIncomeValue">0원</div>
+					</div>
+					<div class="stat-card orange">
+						<div class="stat-card-label">📈 예상 수입</div>
+						<div class="stat-card-value" id="expectedIncomeValue">0원</div>
+					</div>
+					<div class="stat-card blue">
+						<div class="stat-card-label">✅ 납부 완료</div>
+						<div class="stat-card-value" id="paidMembersValue">0명</div>
+						<div class="stat-card-subtext" id="paidMembersSubtext">전체 0명 중</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-card-label">⚠️ 미납</div>
+						<div class="stat-card-value" id="unpaidMembersValue">0명</div>
+						<div class="stat-card-subtext" id="unpaidMembersSubtext">미납 회원</div>
+					</div>
+					<div class="stat-card green">
+						<div class="stat-card-label">📊 수납률</div>
+						<div class="stat-card-value" id="collectionRateValue">0%</div>
+					</div>
 				</div>
-				<div class="stat-card orange">
-					<div class="stat-card-label">📈 예상 수입</div>
-					<div class="stat-card-value" id="expectedIncomeValue">0원</div>
-				</div>
-				<div class="stat-card blue">
-					<div class="stat-card-label">✅ 납부 완료</div>
-					<div class="stat-card-value" id="paidMembersValue">0명</div>
-					<div class="stat-card-subtext" id="paidMembersSubtext">전체 0명 중</div>
-				</div>
-				<div class="stat-card">
-					<div class="stat-card-label">⚠️ 미납</div>
-					<div class="stat-card-value" id="unpaidMembersValue">0명</div>
-					<div class="stat-card-subtext" id="unpaidMembersSubtext">미납 회원</div>
-				</div>
-				<div class="stat-card green">
-					<div class="stat-card-label">📊 수납률</div>
-					<div class="stat-card-value" id="collectionRateValue">0%</div>
-				</div>
-			</div>
 
-			<!-- 월별 통계 테이블 -->
-			<h3 class="report-section-title">📅 연간 월별 통계</h3>
-			<table class="monthly-stats-table">
-				<thead>
-					<tr>
-						<th>월</th>
-						<th>실제 수입</th>
-						<th>예상 수입</th>
-						<th>차액</th>
-						<th>납부 인원</th>
-					</tr>
-				</thead>
-				<tbody id="monthlyStatsBody">
+				<!-- 월별 통계 테이블 -->
+				<h3 class="report-section-title">📅 연간 월별 통계</h3>
+				<table class="monthly-stats-table">
+					<thead>
+						<tr>
+							<th>월</th>
+							<th>실제 수입</th>
+							<th>예상 수입</th>
+							<th>차액</th>
+							<th>납부 인원</th>
+						</tr>
+					</thead>
+					<tbody id="monthlyStatsBody">
+						<!-- JavaScript로 동적 생성 -->
+					</tbody>
+				</table>
+
+				<!-- 액션 버튼 -->
+				<div class="report-actions">
+					<button class="report-action-btn export" onclick="exportReportToExcel()">
+						📥 엑셀 내보내기
+					</button>
+					<button class="report-action-btn print" onclick="printReport()">
+						🖨️ 인쇄
+					</button>
+				</div>
+
+				<!-- 회원별 납부 현황 -->
+				<h3 class="report-section-title">👥 회원별 납부 현황</h3>
+				<div class="member-payment-list" id="memberPaymentList">
 					<!-- JavaScript로 동적 생성 -->
-				</tbody>
-			</table>
-
-			<!-- 회원별 납부 현황 -->
-			<h3 class="report-section-title">👥 회원별 납부 현황</h3>
-			<div class="member-payment-list" id="memberPaymentList">
-				<!-- JavaScript로 동적 생성 -->
+				</div>
 			</div>
 
-			<!-- 액션 버튼 -->
-			<div class="report-actions">
-				<button class="report-action-btn export" onclick="exportReportToExcel()">
-					📥 엑셀 내보내기
-				</button>
-				<button class="report-action-btn print" onclick="printReport()">
-					🖨️ 인쇄
-				</button>
+			<!-- 년도별 리포트 섹션 -->
+			<div id="yearlyReportSection" style="display: none;">
+				<!-- 년도별 통계 카드 -->
+				<div class="stats-cards">
+					<div class="stat-card green">
+						<div class="stat-card-label">💰 연간 총 수입</div>
+						<div class="stat-card-value" id="yearTotalIncomeValue">0원</div>
+					</div>
+					<div class="stat-card orange">
+						<div class="stat-card-label">📈 연간 예상 수입</div>
+						<div class="stat-card-value" id="yearTotalExpectedValue">0원</div>
+					</div>
+					<div class="stat-card blue">
+						<div class="stat-card-label">📊 월평균 수입</div>
+						<div class="stat-card-value" id="yearAvgIncomeValue">0원</div>
+						<div class="stat-card-subtext" id="yearAvgIncomeSubtext">월평균 실제 수입</div>
+					</div>
+					<div class="stat-card green">
+						<div class="stat-card-label">🎯 최고 수입</div>
+						<div class="stat-card-value" id="yearMaxIncomeValue">0원</div>
+						<div class="stat-card-subtext" id="yearMaxIncomeSubtext">1월 최고 수입</div>
+					</div>
+					<div class="stat-card">
+						<div class="stat-card-label">📉 최저 수입</div>
+						<div class="stat-card-value" id="yearMinIncomeValue">0원</div>
+						<div class="stat-card-subtext" id="yearMinIncomeSubtext">1월 최저 수입</div>
+					</div>
+					<div class="stat-card blue">
+						<div class="stat-card-label">💵 연간 차액</div>
+						<div class="stat-card-value" id="yearDifferenceValue">0원</div>
+						<div class="stat-card-subtext" id="yearDifferenceSubtext">연간 차액</div>
+					</div>
+				</div>
+
+				<!-- 년도별 월별 상세 테이블 -->
+				<h3 class="report-section-title">📅 년도별 월별 상세 통계</h3>
+				<table class="monthly-stats-table">
+					<thead>
+						<tr>
+							<th>월</th>
+							<th>실제 수입</th>
+							<th>예상 수입</th>
+							<th>차액</th>
+							<th>수납률</th>
+							<th>납부 인원</th>
+						</tr>
+					</thead>
+					<tbody id="yearlyMonthlyBody">
+						<!-- JavaScript로 동적 생성 -->
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</div>

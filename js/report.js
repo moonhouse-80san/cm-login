@@ -1,6 +1,7 @@
 // 리포트 관련 전역 변수
 let currentReportYear = new Date().getFullYear();
 let currentReportMonth = new Date().getMonth() + 1;
+let currentReportView = 'monthly'; // 'monthly' 또는 'yearly'
 
 // 리포트 모달 열기
 function openReportModal() {
@@ -15,6 +16,7 @@ function openReportModal() {
     const now = new Date();
     currentReportYear = now.getFullYear();
     currentReportMonth = now.getMonth() + 1;
+    currentReportView = 'monthly';
     
     // 모달 표시
     document.getElementById('reportModal').classList.add('active');
@@ -56,12 +58,48 @@ function initReportPeriodSelector() {
 // 리포트 기간 변경
 function changeReportPeriod() {
     currentReportYear = parseInt(document.getElementById('reportYear').value);
-    currentReportMonth = parseInt(document.getElementById('reportMonth').value);
+    if (currentReportView === 'monthly') {
+        currentReportMonth = parseInt(document.getElementById('reportMonth').value);
+    }
+    generateReport();
+}
+
+// 리포트 뷰 전환 (월별/년도별)
+function switchReportView(view) {
+    currentReportView = view;
+    
+    // 버튼 활성화 상태 변경
+    document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`.view-toggle-btn[data-view="${view}"]`).classList.add('active');
+    
+    // 월 선택기 표시/숨김
+    const monthSelectContainer = document.getElementById('monthSelectContainer');
+    if (view === 'monthly') {
+        monthSelectContainer.style.display = 'block';
+    } else {
+        monthSelectContainer.style.display = 'none';
+    }
+    
     generateReport();
 }
 
 // 리포트 생성
 function generateReport() {
+    if (currentReportView === 'monthly') {
+        generateMonthlyReport();
+    } else {
+        generateYearlyReport();
+    }
+}
+
+// 월별 리포트 생성
+function generateMonthlyReport() {
+    // 섹션 표시/숨김
+    document.getElementById('monthlyReportSection').style.display = 'block';
+    document.getElementById('yearlyReportSection').style.display = 'none';
+    
     // 전체 통계 생성
     generateOverallStats();
     
@@ -70,6 +108,19 @@ function generateReport() {
     
     // 회원별 납부 현황 생성
     generateMemberPaymentStatus();
+}
+
+// 년도별 리포트 생성
+function generateYearlyReport() {
+    // 섹션 표시/숨김
+    document.getElementById('monthlyReportSection').style.display = 'none';
+    document.getElementById('yearlyReportSection').style.display = 'block';
+    
+    // 년도별 통계 생성
+    generateYearlyStats();
+    
+    // 년도별 월별 상세 테이블
+    generateYearlyMonthlyTable();
 }
 
 // 전체 통계 생성
@@ -310,106 +361,179 @@ function generateMemberPaymentStatus() {
 // 리포트 엑셀 내보내기
 function exportReportToExcel() {
     const year = currentReportYear;
-    const month = currentReportMonth;
     
     try {
-        // 월별 통계 시트
-        const monthlyData = [
-            ['월', '실제 수입', '예상 수입', '차액', '납부 인원']
-        ];
+        const wb = XLSX.utils.book_new();
         
-        for (let m = 1; m <= 12; m++) {
-            let monthIncome = 0;
-            let monthExpected = 0;
+        if (currentReportView === 'monthly') {
+            // 월별 리포트 엑셀
+            const month = currentReportMonth;
             
-            members.forEach(member => {
-                if (member.fee) {
-                    monthExpected += member.fee;
-                }
-            });
+            // 월별 통계 시트
+            const monthlyData = [
+                ['월', '실제 수입', '예상 수입', '차액', '납부 인원']
+            ];
             
-            const paidMembersSet = new Set();
-            members.forEach(member => {
+            for (let m = 1; m <= 12; m++) {
+                let monthIncome = 0;
+                let monthExpected = 0;
+                
+                members.forEach(member => {
+                    if (member.fee) {
+                        monthExpected += member.fee;
+                    }
+                });
+                
+                const paidMembersSet = new Set();
+                members.forEach(member => {
+                    if (member.paymentHistory && member.paymentHistory.length > 0) {
+                        member.paymentHistory.forEach(payment => {
+                            const paymentDate = new Date(payment.date);
+                            if (paymentDate.getFullYear() === year && 
+                                paymentDate.getMonth() + 1 === m) {
+                                monthIncome += payment.amount || 0;
+                                paidMembersSet.add(member.name);
+                            }
+                        });
+                    }
+                });
+                
+                const monthPaidCount = paidMembersSet.size;
+                const difference = monthIncome - monthExpected;
+                
+                monthlyData.push([
+                    m + '월',
+                    monthIncome,
+                    monthExpected,
+                    difference,
+                    monthPaidCount
+                ]);
+            }
+            
+            // 회원별 납부 현황 시트
+            const memberData = [
+                ['회원명', '담당코치', '월회비', '입금액', '잔액', '상태', '최근 입금일']
+            ];
+            
+            const membersWithFee = members.filter(m => m.fee && m.fee > 0);
+            
+            membersWithFee.forEach(member => {
+                const fee = member.fee;
+                let totalPaid = 0;
+                let lastPaymentDate = '';
+                
                 if (member.paymentHistory && member.paymentHistory.length > 0) {
                     member.paymentHistory.forEach(payment => {
                         const paymentDate = new Date(payment.date);
                         if (paymentDate.getFullYear() === year && 
-                            paymentDate.getMonth() + 1 === m) {
-                            monthIncome += payment.amount || 0;
-                            paidMembersSet.add(member.name);
+                            paymentDate.getMonth() + 1 === month) {
+                            totalPaid += payment.amount || 0;
+                            if (!lastPaymentDate || payment.date > lastPaymentDate) {
+                                lastPaymentDate = payment.date;
+                            }
                         }
                     });
                 }
+                
+                const balance = totalPaid - fee;
+                let status = '미납';
+                if (balance >= 0) {
+                    status = '완납';
+                } else if (totalPaid > 0) {
+                    status = '일부납부';
+                }
+                
+                memberData.push([
+                    member.name,
+                    member.coach || '-',
+                    fee,
+                    totalPaid,
+                    balance,
+                    status,
+                    lastPaymentDate || '-'
+                ]);
             });
             
-            const monthPaidCount = paidMembersSet.size;
-            const difference = monthIncome - monthExpected;
+            const wsMonthly = XLSX.utils.aoa_to_sheet(monthlyData);
+            const wsMember = XLSX.utils.aoa_to_sheet(memberData);
             
-            monthlyData.push([
-                m + '월',
-                monthIncome,
-                monthExpected,
-                difference,
-                monthPaidCount
-            ]);
-        }
-        
-        // 회원별 납부 현황 시트
-        const memberData = [
-            ['회원명', '담당코치', '월회비', '입금액', '잔액', '상태', '최근 입금일']
-        ];
-        
-        const membersWithFee = members.filter(m => m.fee && m.fee > 0);
-        
-        membersWithFee.forEach(member => {
-            const fee = member.fee;
-            let totalPaid = 0;
-            let lastPaymentDate = '';
+            XLSX.utils.book_append_sheet(wb, wsMonthly, '월별통계');
+            XLSX.utils.book_append_sheet(wb, wsMember, '회원별납부현황');
             
-            if (member.paymentHistory && member.paymentHistory.length > 0) {
-                member.paymentHistory.forEach(payment => {
-                    const paymentDate = new Date(payment.date);
-                    if (paymentDate.getFullYear() === year && 
-                        paymentDate.getMonth() + 1 === month) {
-                        totalPaid += payment.amount || 0;
-                        if (!lastPaymentDate || payment.date > lastPaymentDate) {
-                            lastPaymentDate = payment.date;
-                        }
+            const clubName = settings.clubName ? `_${settings.clubName}` : '';
+            const fileName = `입금리포트${clubName}_${year}년${month}월.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+        } else {
+            // 년도별 리포트 엑셀
+            const yearlyData = [
+                ['월', '실제 수입', '예상 수입', '차액', '수납률', '납부 인원']
+            ];
+            
+            let yearTotalIncome = 0;
+            let yearTotalExpected = 0;
+            
+            for (let month = 1; month <= 12; month++) {
+                let monthIncome = 0;
+                let monthExpected = 0;
+                
+                members.forEach(member => {
+                    if (member.fee) {
+                        monthExpected += member.fee;
                     }
                 });
+                
+                const paidMembersSet = new Set();
+                members.forEach(member => {
+                    if (member.paymentHistory && member.paymentHistory.length > 0) {
+                        member.paymentHistory.forEach(payment => {
+                            const paymentDate = new Date(payment.date);
+                            if (paymentDate.getFullYear() === year && 
+                                paymentDate.getMonth() + 1 === month) {
+                                monthIncome += payment.amount || 0;
+                                paidMembersSet.add(member.name);
+                            }
+                        });
+                    }
+                });
+                
+                yearTotalIncome += monthIncome;
+                yearTotalExpected += monthExpected;
+                
+                const monthPaidCount = paidMembersSet.size;
+                const difference = monthIncome - monthExpected;
+                const collectionRate = monthExpected > 0 ? Math.round((monthIncome / monthExpected) * 100) : 0;
+                
+                yearlyData.push([
+                    month + '월',
+                    monthIncome,
+                    monthExpected,
+                    difference,
+                    collectionRate + '%',
+                    monthPaidCount
+                ]);
             }
             
-            const balance = totalPaid - fee;
-            let status = '미납';
-            if (balance >= 0) {
-                status = '완납';
-            } else if (totalPaid > 0) {
-                status = '일부납부';
-            }
+            // 합계 행
+            const totalDifference = yearTotalIncome - yearTotalExpected;
+            const totalCollectionRate = yearTotalExpected > 0 ? Math.round((yearTotalIncome / yearTotalExpected) * 100) : 0;
             
-            memberData.push([
-                member.name,
-                member.coach || '-',
-                fee,
-                totalPaid,
-                balance,
-                status,
-                lastPaymentDate || '-'
+            yearlyData.push([
+                '합계',
+                yearTotalIncome,
+                yearTotalExpected,
+                totalDifference,
+                totalCollectionRate + '%',
+                '-'
             ]);
-        });
-        
-        // 워크북 생성
-        const wb = XLSX.utils.book_new();
-        
-        const wsMonthly = XLSX.utils.aoa_to_sheet(monthlyData);
-        const wsMember = XLSX.utils.aoa_to_sheet(memberData);
-        
-        XLSX.utils.book_append_sheet(wb, wsMonthly, '월별통계');
-        XLSX.utils.book_append_sheet(wb, wsMember, '회원별납부현황');
-        
-        const clubName = settings.clubName ? `_${settings.clubName}` : '';
-        const fileName = `입금리포트${clubName}_${year}년${month}월.xlsx`;
-        XLSX.writeFile(wb, fileName);
+            
+            const wsYearly = XLSX.utils.aoa_to_sheet(yearlyData);
+            XLSX.utils.book_append_sheet(wb, wsYearly, '년도별통계');
+            
+            const clubName = settings.clubName ? `_${settings.clubName}` : '';
+            const fileName = `입금리포트${clubName}_${year}년.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
         
         showAlert('리포트가 엑셀 파일로 내보내졌습니다!');
         
@@ -422,4 +546,159 @@ function exportReportToExcel() {
 // 리포트 인쇄
 function printReport() {
     window.print();
+}
+
+// ==================== 년도별 리포트 함수 ====================
+
+// 년도별 통계 생성
+function generateYearlyStats() {
+    const year = currentReportYear;
+    
+    // 해당 연도의 입금 데이터 수집
+    let totalYearIncome = 0;
+    let totalYearExpected = 0;
+    const monthlyIncome = new Array(12).fill(0);
+    const monthlyExpected = new Array(12).fill(0);
+    
+    members.forEach(member => {
+        const fee = member.fee || 0;
+        
+        // 월별 예상 수입 계산 (12개월)
+        if (fee > 0) {
+            for (let month = 1; month <= 12; month++) {
+                monthlyExpected[month - 1] += fee;
+            }
+            totalYearExpected += fee * 12;
+        }
+        
+        // 실제 입금 데이터
+        if (member.paymentHistory && member.paymentHistory.length > 0) {
+            member.paymentHistory.forEach(payment => {
+                const paymentDate = new Date(payment.date);
+                if (paymentDate.getFullYear() === year) {
+                    const month = paymentDate.getMonth();
+                    monthlyIncome[month] += payment.amount || 0;
+                    totalYearIncome += payment.amount || 0;
+                }
+            });
+        }
+    });
+    
+    // 평균 계산
+    const avgMonthlyIncome = Math.round(totalYearIncome / 12);
+    const avgMonthlyExpected = Math.round(totalYearExpected / 12);
+    
+    // 최고/최저 수입 월 찾기
+    let maxIncome = 0;
+    let maxMonth = 1;
+    let minIncome = Infinity;
+    let minMonth = 1;
+    
+    for (let i = 0; i < 12; i++) {
+        if (monthlyIncome[i] > maxIncome) {
+            maxIncome = monthlyIncome[i];
+            maxMonth = i + 1;
+        }
+        if (monthlyIncome[i] < minIncome) {
+            minIncome = monthlyIncome[i];
+            minMonth = i + 1;
+        }
+    }
+    
+    if (minIncome === Infinity) minIncome = 0;
+    
+    // 통계 카드 업데이트
+    document.getElementById('yearTotalIncomeValue').textContent = formatNumber(totalYearIncome) + '원';
+    document.getElementById('yearTotalExpectedValue').textContent = formatNumber(totalYearExpected) + '원';
+    document.getElementById('yearAvgIncomeValue').textContent = formatNumber(avgMonthlyIncome) + '원';
+    document.getElementById('yearAvgIncomeSubtext').textContent = '월평균 실제 수입';
+    document.getElementById('yearMaxIncomeValue').textContent = formatNumber(maxIncome) + '원';
+    document.getElementById('yearMaxIncomeSubtext').textContent = maxMonth + '월 최고 수입';
+    document.getElementById('yearMinIncomeValue').textContent = formatNumber(minIncome) + '원';
+    document.getElementById('yearMinIncomeSubtext').textContent = minMonth + '월 최저 수입';
+    
+    const yearDifference = totalYearIncome - totalYearExpected;
+    document.getElementById('yearDifferenceValue').textContent = 
+        (yearDifference >= 0 ? '+' : '') + formatNumber(yearDifference) + '원';
+    document.getElementById('yearDifferenceSubtext').textContent = '연간 차액';
+}
+
+// 년도별 월별 상세 테이블 생성
+function generateYearlyMonthlyTable() {
+    const year = currentReportYear;
+    const tbody = document.getElementById('yearlyMonthlyBody');
+    tbody.innerHTML = '';
+    
+    let yearTotalIncome = 0;
+    let yearTotalExpected = 0;
+    
+    // 12개월 데이터 생성
+    for (let month = 1; month <= 12; month++) {
+        let monthIncome = 0;
+        let monthPaidCount = 0;
+        let monthExpected = 0;
+        
+        // 해당 월의 회비가 설정된 회원 수와 예상 수입
+        members.forEach(member => {
+            if (member.fee) {
+                monthExpected += member.fee;
+            }
+        });
+        
+        // 해당 월에 입금한 회원 수와 총 입금액
+        const paidMembersSet = new Set();
+        members.forEach(member => {
+            if (member.paymentHistory && member.paymentHistory.length > 0) {
+                member.paymentHistory.forEach(payment => {
+                    const paymentDate = new Date(payment.date);
+                    if (paymentDate.getFullYear() === year && 
+                        paymentDate.getMonth() + 1 === month) {
+                        monthIncome += payment.amount || 0;
+                        paidMembersSet.add(member.name);
+                    }
+                });
+            }
+        });
+        
+        monthPaidCount = paidMembersSet.size;
+        yearTotalIncome += monthIncome;
+        yearTotalExpected += monthExpected;
+        
+        const difference = monthIncome - monthExpected;
+        const collectionRate = monthExpected > 0 ? Math.round((monthIncome / monthExpected) * 100) : 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${month}월</strong></td>
+            <td class="amount-highlight">${formatNumber(monthIncome)}원</td>
+            <td>${formatNumber(monthExpected)}원</td>
+            <td class="${difference >= 0 ? 'amount-positive' : 'amount-negative'}">
+                ${difference >= 0 ? '+' : ''}${formatNumber(difference)}원
+            </td>
+            <td>${collectionRate}%</td>
+            <td>${monthPaidCount}명</td>
+        `;
+        
+        tbody.appendChild(row);
+    }
+    
+    // 합계 행 추가
+    const totalDifference = yearTotalIncome - yearTotalExpected;
+    const totalCollectionRate = yearTotalExpected > 0 ? Math.round((yearTotalIncome / yearTotalExpected) * 100) : 0;
+    
+    const totalRow = document.createElement('tr');
+    totalRow.style.background = '#f0f0f0';
+    totalRow.style.fontWeight = 'bold';
+    totalRow.innerHTML = `
+        <td>합계</td>
+        <td class="amount-highlight">${formatNumber(yearTotalIncome)}원</td>
+        <td>${formatNumber(yearTotalExpected)}원</td>
+        <td class="${totalDifference >= 0 ? 'amount-positive' : 'amount-negative'}">
+            ${totalDifference >= 0 ? '+' : ''}${formatNumber(totalDifference)}원
+        </td>
+        <td>${totalCollectionRate}%</td>
+        <td>-</td>
+    `;
+    
+    tbody.appendChild(totalRow);
 }
