@@ -126,3 +126,5 @@
 	login.js
 	member.js
 	modal.js
+	settings.js
+	index.html
