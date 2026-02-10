@@ -117,3 +117,12 @@
 	- 엑셀 파일 팝업 주소 제거
 	settings.js
 	
+6. 2월 10일 수정
+	[사항1]
+	- 코치별로 권한 부여(코)
+	calendar.js
+	coach.js
+	form.js
+	login.js
+	member.js
+	modal.js

@@ -230,7 +230,7 @@ function renderCoachMembersList(membersList) {
             `;
         }
 
-        const hasPermission = hasEditPermission();
+        const hasPermission = canEditMember(member);
         const editBtnClass = hasPermission ? 'btn-edit' : 'btn-edit btn-edit-disabled btn-hidden';
         const deleteBtnClass = hasPermission ? 'btn-delete' : 'btn-delete btn-delete-disabled btn-hidden';
 

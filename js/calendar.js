@@ -313,7 +313,7 @@ function selectDate(year, month, date) {
 
 function showAttendanceSelectModal() {
     const modal = document.getElementById('attendanceSelectModal');
-    const list = document.getElementById('memberSelectList');
+    const list = document.getElementById('memberSelectList');␊
     const searchInput = document.getElementById('attendanceSearchInput');
     
     if (searchInput) {
@@ -322,13 +322,17 @@ function showAttendanceSelectModal() {
     
     list.innerHTML = '';
 
-    const validMembers = members.filter(member => {
+    const membersWithTarget = members.filter(member => {
         const targetCount = member.targetCount || 0;
         return targetCount > 0;
     });
+    const validMembers = membersWithTarget.filter(member => canEditMember(member));
 
     if (validMembers.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">목표 레슨 횟수가 설정된 회원이 없습니다.<br>회원 정보에서 목표 레슨 횟수를 설정해주세요.</p>';
+        const emptyMessage = membersWithTarget.length > 0
+            ? '담당하는 회원이 없습니다.'
+            : '목표 레슨 횟수가 설정된 회원이 없습니다.<br>회원 정보에서 목표 레슨 횟수를 설정해주세요.';
+        list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">' + emptyMessage + '</p>';
         modal.classList.add('active');
         return;
     }
@@ -378,11 +382,11 @@ function renderAttendanceMemberList(membersToShow) {
 function filterAttendanceMembers() {
     const searchInput = document.getElementById('attendanceSearchInput');
     const searchTerm = searchInput.value.toLowerCase().trim();
-    
+
     let validMembers = members.filter(member => {
         const targetCount = member.targetCount || 0;
-        return targetCount > 0;
-    });
+        return targetCount > 0 && canEditMember(member);
+    });␊
     
     if (searchTerm) {
         validMembers = validMembers.filter(member => 
@@ -400,6 +404,10 @@ function closeAttendanceSelectModal() {
 }
 
 function toggleAttendance(memberIndex) {
+    if (!canEditMemberByIndex(memberIndex)) {
+        showAlert('이 회원의 레슨을 체크할 권한이 없습니다.');
+        return;
+    }
     const member = members[memberIndex];
 
     if (!member.attendanceDates) {

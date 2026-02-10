@@ -377,6 +377,29 @@ function hasEditPermission() {
     return result;
 }
 
+function canEditMember(member) {
+    if (!member) {
+        return false;
+    }
+
+    if (currentUser.role === USER_ROLES.ADMIN) {
+        return true;
+    }
+
+    if (currentUser.role === USER_ROLES.SUB_ADMIN) {
+        const coachName = (currentUser.username || '').trim();
+        const canEdit = coachName !== '' && member.coach === coachName;
+        console.log('✅ canEditMember (sub_admin):', canEdit, 'coach:', member.coach, 'user:', coachName);
+        return canEdit;
+    }
+
+    return false;
+}
+
+function canEditMemberByIndex(index) {
+    return canEditMember(members[index]);
+}
+
 function hasSettingsPermission() {
     const result = currentUser.role === USER_ROLES.ADMIN;
     console.log('✅ hasSettingsPermission:', result, '현재 역할:', currentUser.role);
@@ -407,7 +430,11 @@ function checkPermissionBeforeDelete(index) {
         openLoginModal();
         return false;
     }
-    showDeleteModal(index);
+    if (!canEditMemberByIndex(index)) {
+        showAlert('이 회원을 삭제할 권한이 없습니다.');
+        return false;
+    }
+	showDeleteModal(index);
     return true;
 }
 
