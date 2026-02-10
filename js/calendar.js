@@ -81,26 +81,6 @@ function sendWelcomeSMS(memberName, memberPhone) {
     }
 }
 
-// 환영 메시지 자동 브라우저 푸시
-function sendWelcomePush(memberName) {
-    const clubName = settings.clubName || '탁구클럽';
-    const body = memberName + '님, ' + clubName + ' 가입을 환영합니다! 🎉';
-    showBrowserNotification('👋 환영합니다!', body, {
-        tag: 'welcome-' + memberName,
-        renotify: true
-    });
-}
-
-// 레슨 마지막 체크(목표 달성) 자동 브라우저 푸시
-function sendLessonCompletePush(memberName, targetCount) {
-    const clubName = settings.clubName || '탁구클럽';
-    const body = memberName + '님 목표 ' + targetCount + '회 레슨을 완료했습니다. 회비 안내를 확인해주세요.';
-    showBrowserNotification('✅ 레슨 완료 알림', body, {
-        tag: 'lesson-complete-' + memberName,
-        renotify: true
-    });
-}
-
 // 레슨 알림 모달 표시
 function showAttendanceAlert(memberName, currentCount, targetCount) {
     const message = '<strong>' + memberName + '</strong> 회원님<br>현재 레슨: <strong>' + currentCount + '회</strong> / 목표: <strong>' + targetCount + '회</strong><br><br>회비입금이 임박했습니다!';
@@ -454,9 +434,6 @@ function toggleAttendance(memberIndex) {
                     member.attendanceHistory.push(date);
                 }
             });
-
-            // 마지막 레슨 체크 시 자동 푸시 발송
-            sendLessonCompletePush(member.name, targetCount);
 
             member.currentCount = 0;
             member.attendanceDates = [];

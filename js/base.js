@@ -219,54 +219,6 @@ function formatNumber(num) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// ==================== 브라우저 푸시(알림) 유틸 ====================
-function isNotificationSupported() {
-    return 'Notification' in window;
-}
-
-function requestNotificationPermission() {
-    if (!isNotificationSupported()) {
-        return Promise.resolve('unsupported');
-    }
-
-    if (Notification.permission === 'granted' || Notification.permission === 'denied') {
-        return Promise.resolve(Notification.permission);
-    }
-
-    return Notification.requestPermission().catch(() => 'default');
-}
-
-function showBrowserNotification(title, body, options) {
-    if (!isNotificationSupported() || Notification.permission !== 'granted') {
-        return;
-    }
-
-    const notificationOptions = Object.assign({
-        body: body,
-        icon: './etc/icon-192.png',
-        badge: './etc/icon-192.png',
-        tag: 'cm-login-notification',
-        renotify: false
-    }, options || {});
-
-    if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready
-            .then((registration) => registration.showNotification(title, notificationOptions))
-            .catch(() => new Notification(title, notificationOptions));
-        return;
-    }
-
-    new Notification(title, notificationOptions);
-}
-
-function initPushNotifications() {
-    requestNotificationPermission();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    initPushNotifications();
-});
-
 // 날짜 포맷팅
 function formatDate(dateString) {
     if (!dateString) return '';
