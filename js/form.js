@@ -212,6 +212,9 @@ function addMember() {
     filteredMembers = [...members];
     renderMembers();
     renderSchedule();
+
+    // 회원 등록 시 환영 푸시 자동 발송
+    sendWelcomePush(member.name);
     
 	// SMS 발송 여부 확인
 	if (member.phone) {
