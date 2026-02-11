@@ -12,6 +12,7 @@ const urlsToCache = [
   './css/coach.css',
   './css/responsive.css',
   './css/schedule.css',
+  './css/report.css',  
   './js/base.js',
   './js/login.js',
   './js/modal.js',
@@ -22,6 +23,7 @@ const urlsToCache = [
   './js/calendar.js',
   './js/coach.js',
   './js/settings.js',
+  './js/report.js',  
   './etc/manifest.json'
 ];
 
